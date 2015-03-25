@@ -32,6 +32,45 @@ OPTIONS:
    --password|-p  Set WiFI password for this SD image
 ```
 
+## How it looks like
+
+This is a complete download and flash cycle with all its steps.
+
+```
+$ flash http://assets.hypriot.com/hypriot-rpi-20150301-140537.img.zip
+Downloading http://assets.hypriot.com/hypriot-rpi-20150301-140537.img.zip ...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  346M  100  346M    0     0  5643k      0  0:01:02  0:01:02 --:--:-- 5366k
+Uncompressing /tmp/image.img.zip ...
+Archive:  /tmp/image.img.zip
+  inflating: /tmp/hypriot-rpi-20150301-140537.img  
+Use /tmp/hypriot-rpi-20150301-140537.img
+No SD card found. Please insert SD card, I'll wait for it...
+Filesystem    512-blocks      Used Available Capacity   iused    ifree %iused  Mounted on
+/dev/disk1     974700800 863201064 110987736    89% 107964131 13873467   89%   /
+devfs                669       669         0   100%      1159        0  100%   /dev
+map -hosts             0         0         0   100%         0        0  100%   /net
+map auto_home          0         0         0   100%         0        0  100%   /home
+/dev/disk2s1      114576     29456     85120    26%       512        0  100%   /Volumes/boot
+
+Is /dev/disk2s1 correct? y
+Unmounting disk2 ...
+Unmount of all volumes on disk2 was successful
+Unmount of all volumes on disk2 was successful
+Flashing /tmp/hypriot-rpi-20150301-140537.img to disk2 ...
+Password:
+ 976MiB 0:01:12 [13.4MiB/s] [=============================================>] 100%
+0+15625 records in
+0+15625 records out
+1024000000 bytes transferred in 72.779589 secs (14069879 bytes/sec)
+Unmounting and ejecting disk2 ...
+Unmount of all volumes on disk2 was successful
+Unmount of all volumes on disk2 was successful
+Disk /dev/disk2 ejected
+🍺  Finished.
+```
+
 ## occidentalis.txt
 
 The option `--config` could be used to copy a `occidentalis.txt` into the SD image before it is unplugged.
