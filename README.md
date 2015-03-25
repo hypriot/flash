@@ -34,7 +34,10 @@ OPTIONS:
 
 ## occidentalis.txt
 
-The option `--config` could be used to copy a `occidentalis.txt` into the SD image bef
+The option `--config` could be used to copy a `occidentalis.txt` into the SD image before it is unplugged.
+
+Many kudos to [Adafruit's occi](https://github.com/adafruit/Adafruit-Occi) package that handles updating hostname and WiFi settings while booting the Raspberry Pi.
+
 The config file `occidentalis.txt` should look like
 
 ```
