@@ -37,15 +37,15 @@ OPTIONS:
 This is a complete download and flash cycle with all its steps.
 
 ```
-$ flash http://assets.hypriot.com/hypriot-rpi-20150301-140537.img.zip
-Downloading http://assets.hypriot.com/hypriot-rpi-20150301-140537.img.zip ...
+$ flash http://assets.hypriot.com/hypriot-rpi-20150329-140334.img.zip
+Downloading http://assets.hypriot.com/hypriot-rpi-20150329-140334.img.zip ...
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  346M  100  346M    0     0  5643k      0  0:01:02  0:01:02 --:--:-- 5366k
 Uncompressing /tmp/image.img.zip ...
 Archive:  /tmp/image.img.zip
-  inflating: /tmp/hypriot-rpi-20150301-140537.img  
-Use /tmp/hypriot-rpi-20150301-140537.img
+  inflating: /tmp/hypriot-rpi-20150329-140334.img  
+Use /tmp/hypriot-rpi-20150329-140334.img
 No SD card found. Please insert SD card, I'll wait for it...
 Filesystem    512-blocks      Used Available Capacity   iused    ifree %iused  Mounted on
 /dev/disk1     974700800 863201064 110987736    89% 107964131 13873467   89%   /
@@ -93,7 +93,7 @@ wifi_password = 12345
 ### Flash a compressed SD image from the internet
 
 ```bash
-flash http://assets.hypriot.com/hypriot-rpi-20150301-140537.img.zip
+flash http://assets.hypriot.com/hypriot-rpi-20150329-140334.img.zip
 ```
 
 ### Flash with a given hostname
