@@ -81,11 +81,11 @@ The config file `occidentalis.txt` should look like
 
 ```
 # hostname for your Hypriot Raspberry Pi:
-hostname = hypriot-pi
+hostname=hypriot-pi
 
 # basic wireless networking options:
-wifi_ssid = SSID
-wifi_password = 12345
+wifi_ssid=SSID
+wifi_password=12345
 ```
 
 ## Use cases
