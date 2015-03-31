@@ -65,14 +65,6 @@ while getopts ":hc:n:s:p:" opt; do
 done
 shift $((OPTIND -1))
 
-#echo "remaining args"
-#echo $*
-
-#echo "CONFIG = $CONFIG"
-#echo "SD_HOSTNAME = $SD_HOSTNAME"
-#echo "WIFI_SSID = $WIFI_SSID"
-#echo "WIFI_PASSWORD = $WIFI_PASSWORD"
-
 beginswith() { case $2 in $1*) true;; *) false;; esac; }
 endswith() { case $2 in *$1) true;; *) false;; esac; }
 
@@ -165,15 +157,15 @@ if [ -f "$OCCI_CONFIG" ]; then
 fi
 
 if [ ! -z $SD_HOSTNAME ]; then
-  echo "Set hostname = $SD_HOSTNAME"
+  echo "Set hostname=$SD_HOSTNAME"
   sed -i -e "s/.*hostname.*=.*\$/hostname=$SD_HOSTNAME/" "${boot}/occidentalis.txt"
 fi
 if [ ! -z $WIFI_SSID ]; then
-  echo "Set wifi_ssid = $WIFI_SSID"
+  echo "Set wifi_ssid=$WIFI_SSID"
   sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=$WIFI_SSID/" "${boot}/occidentalis.txt"
 fi
 if [ ! -z $WIFI_PASSWORD ]; then
-  echo "Set wifi_password = $WIFI_PASSWORD"
+  echo "Set wifi_password=$WIFI_PASSWORD"
   sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=$WIFI_PASSWORD/" "${boot}/occidentalis.txt"
 fi
 
