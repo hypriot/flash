@@ -1,0 +1,256 @@
+#!/bin/bash
+# Flash Raspberry Pi SD card images on your Mac
+# Stefan Scherer - scherer_stefan@icloud.com
+#
+# Linux Version by Matt Williams - matt@matthewkwilliams.com
+# MIT License
+
+error()
+{
+    echo $1
+    exit $2
+}
+
+usage()
+{
+    cat << EOF
+usage: $0 [options] name-of-rpi.img
+
+Flash a local or remote Raspberry Pi SD card image.
+
+OPTIONS:
+   --help|-h      Show this message
+   --config|-c    Copy this config file to /boot/occidentalis.txt
+   --hostname|-n  Set hostname for this SD image
+   --ssid|-s      Set WiFi SSID for this SD image
+   --password|-p  Set WiFI password for this SD image
+   --device|-d       Card Device
+
+The config file occidentalis.txt should look like
+
+# hostname for your Hypriot Raspberry Pi:
+hostname=hypriot-pi
+
+# basic wireless networking options:
+wifi_ssid=SSID
+wifi_password=12345
+EOF
+    exit 1
+}
+
+# translate long options to short
+for arg
+do
+    delim=""
+    case "$arg" in
+	--help) args="${args}-h ";;
+	--verbose) args="${args}-v ";;
+	--config) args="${args}-c ";;
+	--hostname) args="${args}-n ";;
+	--ssid) args="${args}-s ";;
+	--password) args="${args}-p ";;
+	--device) args="${args}-d ";;
+	# pass through anything else
+	*) [[ "${arg:0:1}" == "-" ]] || delim="\""
+            args="${args}${delim}${arg}${delim} ";;
+    esac
+done
+# reset the translated args
+eval set -- $args
+# now we can process with getopt
+while getopts "hc:n:s:p:d:" opt; do
+    case $opt in
+        h)  usage ;;
+        c)  OCCI_CONFIG=$OPTARG ;;
+        n)  SD_HOSTNAME=$OPTARG ;;
+        s)  WIFI_SSID=$OPTARG ;;
+        p)  WIFI_PASSWORD=$OPTARG ;;
+	d)  disk=$OPTARG ;;
+        \?) usage ;;
+        :)
+            echo "option -$OPTARG requires an argument"
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND -1))
+
+beginswith() { case $2 in $1*) true;; *) false;; esac; }
+endswith() { case $2 in *$1) true;; *) false;; esac; }
+
+image=$1
+
+occi=$2
+
+if [[ "$1" == "--help" ]]; then
+    usage
+fi
+
+if beginswith http:// "$image" ;then
+    which curl 2>/dev/null || error "Error: curl not found. Aborting" 1 
+    echo "Downloading $image ..."
+    curl -L -o /tmp/image.img.zip "$image"
+    image=/tmp/image.img.zip
+fi
+
+ 
+if beginswith s3:// "$image" ;then
+     which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
+     echo "Downloading $image ..."
+     aws s3 cp "$image" /tmp/image.img.zip
+     image=/tmp/image.img.zip
+fi
+ 
+if [ ! -f "$image" ]; then
+    echo "File not found."
+    exit 10
+fi
+
+if endswith .zip "$image" ;then
+    which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
+    echo "Uncompressing $image ..."
+    unzip -o "$image" -d /tmp
+    image=$(unzip -l "$image" | grep -v Archive: | grep img | cut -c 30-)
+    image="/tmp/$image"
+    echo "Use $image"
+fi
+
+# Figure out our OS
+if [[ -z "$OSTYPE" ]]; then
+    OSTYPE=`uname -s`
+fi
+
+case "$OSTYPE" in 
+    darwin)
+	echo This version does not support Mac. Use 'flash' instead
+	exit 11
+	;;
+    Linux)
+	;;
+    linux-gnu)
+        ;;
+    *)
+	echo Unknown OS: ${OSTYPE}
+	exit 11
+	;;
+esac
+
+if [[ -z "$disk" ]]; then
+    # try to find the correct disk of the inserted SD card
+    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//'  | sort | uniq`
+
+    if [[ `echo "$disk"|awk '{print NF}'` -gt 1 ]]; then
+	PS3='Please pick your device: '
+	choices="${disk} 'None of the Above'"
+	size=`$echo "$choices" | awk '{print NF}'`
+	select choice in `echo $choices`; do
+	    if [[ $REPLY == $size ]]; then
+		disk=""
+		break
+	    fi
+	    if [[ -n `echo ${choices} | grep ${choice}` ]]; then
+		disk=$choice
+		break
+	    fi
+	    echo "Invalid choice. Please try again"
+	    continue
+	done
+    fi
+
+    if [ "$disk" == "" ]; then
+	echo "No SD card found. Please insert SD card, I'll wait for it..."
+	while [ "$disk" == "" ]; do
+	    sleep 1
+	    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//'  | sort | uniq`
+	done
+    fi
+fi
+
+
+df
+while true; do
+    echo ""
+    read -p "Is ${disk} correct? " yn
+    case $yn in
+	[Yy]* ) break;;
+	[Nn]* ) exit;;
+	* ) echo "Please answer yes or no.";;
+    esac
+done
+
+
+# paranoia sync before umounting
+echo "Synchronizing Filesystems"
+sudo sync; sudo sync; sudo sync
+
+echo "Unmounting ${disk} ..."
+for i in `df |grep $disk | awk '{print $NF}'`
+do
+    sudo umount $i
+done
+
+echo "Flashing $image to ${disk} ..."
+pv=`which pv 2>/dev/null`
+if [ $? -eq 0 ]; then
+    # this sudo here is used for a login without pv's progress bar
+    # hiding the password prompt
+    size=`sudo stat -c %s $image`
+    cat $image | pv -s $size | sudo dd bs=1M of=${disk}
+else
+    echo "No `pv` command found, so no progress available."
+    echo "Press CTRL+T if you want to see the current info of dd command."
+    sudo dd bs=1M if=$image of=${disk}
+fi
+
+echo "Flushing Buffers"
+sudo sync;sudo sync; sudo sync
+
+
+boot=/tmp/mnt
+
+echo "Mounting Disk"
+mkdir -p ${boot}
+
+if beginswith /dev/mmcblk $disk ;then
+    dev="${disk}p1"
+else
+    dev="${disk}1"
+fi
+
+echo "Mounting ${dev} to customize"
+sudo mount ${dev} ${boot}
+
+if [ -f "$OCCI_CONFIG" ]; then
+    echo "Copying $OCCI_CONFIG to ${boot}/occidentalis.txt ..."
+    cp "$OCCI_CONFIG"  "${boot}/occidentalis.txt"
+fi
+
+if [ ! -z $SD_HOSTNAME ]; then
+    echo "Set hostname=$SD_HOSTNAME"
+    sudo sed -i -e "s/.*hostname.*=.*\$/hostname=$SD_HOSTNAME/" "${boot}/occidentalis.txt"
+fi
+if [ ! -z $WIFI_SSID ]; then
+    echo "Set wifi_ssid=$WIFI_SSID"
+    sudo sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=$WIFI_SSID/" "${boot}/occidentalis.txt"
+fi
+if [ ! -z $WIFI_PASSWORD ]; then
+    echo "Set wifi_password=$WIFI_PASSWORD"
+    sudo sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=$WIFI_PASSWORD/" "${boot}/occidentalis.txt"
+fi
+
+sudo sync;sudo sync; sudo sync
+
+echo "Unmounting ${disk} ..."
+sleep 1
+
+for i in `df|grep $disk|awk '{print $1}'`
+do
+    sudo umount $i
+done
+
+if [ $? -eq 0 ]; then
+    echo "Finished."
+else
+    echo "Someting went wrong."
+fi
+
