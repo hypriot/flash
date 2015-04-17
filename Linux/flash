@@ -87,20 +87,20 @@ if [[ "$1" == "--help" ]]; then
 fi
 
 if beginswith http:// "$image" ;then
-    which curl 2>/dev/null || error "Error: curl not found. Aborting" 1 
+    which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
     echo "Downloading $image ..."
     curl -L -o /tmp/image.img.zip "$image"
     image=/tmp/image.img.zip
 fi
 
- 
+
 if beginswith s3:// "$image" ;then
      which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
      echo "Downloading $image ..."
      aws s3 cp "$image" /tmp/image.img.zip
      image=/tmp/image.img.zip
 fi
- 
+
 if [ ! -f "$image" ]; then
     echo "File not found."
     exit 10
@@ -120,9 +120,10 @@ if [[ -z "$OSTYPE" ]]; then
     OSTYPE=`uname -s`
 fi
 
-case "$OSTYPE" in 
+case "$OSTYPE" in
     darwin)
-	echo This version does not support Mac. Use 'flash' instead
+	echo This version does not support Mac.
+  echo Download Mac version from https://github.com/hypriot/flash instead.
 	exit 11
 	;;
     Linux)
@@ -253,4 +254,3 @@ if [ $? -eq 0 ]; then
 else
     echo "Someting went wrong."
 fi
-

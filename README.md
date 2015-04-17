@@ -14,7 +14,17 @@ This script can
 * play a little sound after flashing
 * unplugs the SD card
 
-At the moment only Mac OSX is supported.
+At the moment only Mac OS X and Linux is supported.
+
+## Installation
+
+Download the appropriate version for Linux or Mac with this command
+
+```bash
+wget https://raw.githubusercontent.com/hypriot/flash/master/`uname -s`/flash
+chmod +x flash
+sudo mv flash /usr/local/bin/flash
+```
 
 ## Usage
 
