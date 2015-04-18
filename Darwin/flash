@@ -103,25 +103,11 @@ if endswith .zip "$image"; then
   echo "Use $image"
 fi
 
-if [[ "$OSTYPE" != "darwin"*  ]]; then
-  echo "Only Mac OSX supported"
+if [[ "$OSTYPE" != "sdarwin"*  ]]; then
+  echo "This version does only support Mac."
+  echo "Please download correct version from https://github.com/hypriot/flash"
   exit 11
 fi
-case "$OSTYPE" in
-  darwin)
-	  ;;
-  Linux)
-  linux-gnu)
-    echo This version does not support Linux.
-    echo Download Linux version from https://github.com/hypriot/flash instead.
-    exit 11
-    ;;
-  *)
-	  echo Unknown OS: ${OSTYPE}
-	  exit 11
-	  ;;
-esac
-
 
 # try to find the correct disk of the inserted SD card
 disk=`df | grep -e "disk[0-9]s1" | grep Volumes | cut -c 6-10`
