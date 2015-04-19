@@ -103,7 +103,7 @@ if endswith .zip "$image"; then
   echo "Use $image"
 fi
 
-if [[ "$OSTYPE" != "sdarwin"*  ]]; then
+if [[ "$OSTYPE" != "darwin"*  ]]; then
   echo "This version does only support Mac."
   echo "Please download correct version from https://github.com/hypriot/flash"
   exit 11
