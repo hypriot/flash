@@ -129,6 +129,12 @@ wifi_password=12345
 flash http://assets.hypriot.com/hypriot-rpi-20150329-140334.img.zip
 ```
 
+### Flash a compressed SD image from S3 bucket
+
+```bash
+flash s3://bucket/path/to/hypriot-rpi-20150611-195657.img.zip
+```
+
 ### Flash with a given hostname
 
 This works only for SD card images that already have `occi` installed.
