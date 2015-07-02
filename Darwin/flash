@@ -34,7 +34,7 @@ exit 1
 for arg
 do
     delim=""
-    case "$arg" in
+    case "${arg}" in
        --help) args="${args}-h ";;
        --verbose) args="${args}-v ";;
        --config) args="${args}-c ";;
@@ -76,34 +76,43 @@ if [ "$1" == "--help" ]; then
   usage
 fi
 
-if beginswith http:// "$image"; then
-  which curl >/dev/null || (echo "Error: curl not found. Aborting" && exit 1)
-  echo "Downloading $image ..."
-  curl -L -o /tmp/image.img.zip "$image"
-  image=/tmp/image.img.zip
+filename=$(basename "${image}")
+extension="${filename##*.}"
+filename="${filename%.*}"
+
+if [ -f "/tmp/${filename}" ]; then
+  image=/tmp/${filename}
+  echo "Using cached image ${image}"
+else
+  if beginswith http:// "${image}"; then
+    which curl >/dev/null || (echo "Error: curl not found. Aborting" && exit 1)
+    echo "Downloading ${image} ..."
+    curl -L -o /tmp/image.img.${extension} "${image}"
+    image=/tmp/image.img.${extension}
+  fi
+
+  if beginswith s3:// "${image}"; then
+    which aws >/dev/null || (echo "Error: aws not found. Aborting" && exit 1)
+    echo "Downloading ${image} ..."
+    aws s3 cp "${image}" /tmp/image.img.${extension}
+    image=/tmp/image.img.${extension}
+  fi
+
+  if [ ! -f "${image}" ]; then
+    echo "File not found."
+    exit 10
+  fi
+
+  if endswith .zip "${image}"; then
+    echo "Uncompressing ${image} ..."
+    unzip -o "${image}" -d /tmp
+    image=$(unzip -l "${image}" | grep -v Archive: | grep img | cut -c 30-)
+    image="/tmp/${image}"
+    echo "Use ${image}"
+  fi
 fi
 
-if beginswith s3:// "$image"; then
-  which aws >/dev/null || (echo "Error: aws not found. Aborting" && exit 1)
-  echo "Downloading $image ..."
-  aws s3 cp "$image" /tmp/image.img.zip
-  image=/tmp/image.img.zip
-fi
-
-if [ ! -f "$image" ]; then
-  echo "File not found."
-  exit 10
-fi
-
-if endswith .zip "$image"; then
-  echo "Uncompressing $image ..."
-  unzip -o "$image" -d /tmp
-  image=$(unzip -l "$image" | grep -v Archive: | grep img | cut -c 30-)
-  image="/tmp/$image"
-  echo "Use $image"
-fi
-
-if [[ "$OSTYPE" != "darwin"*  ]]; then
+if [[ "${OSTYPE}" != "darwin"*  ]]; then
   echo "This version does only support Mac."
   echo "Please download correct version from https://github.com/hypriot/flash"
   exit 11
@@ -111,9 +120,9 @@ fi
 
 # try to find the correct disk of the inserted SD card
 disk=`df | grep -e "disk[0-9]s1" | grep Volumes | cut -c 6-10`
-if [ "$disk" == "" ]; then
+if [ "${disk}" == "" ]; then
   echo "No SD card found. Please insert SD card, I'll wait for it..."
-  while [ "$disk" == "" ]; do
+  while [ "${disk}" == "" ]; do
     sleep 1
     disk=`df | grep -e "disk[0-9]s1" | grep Volumes | cut -c 6-10`
   done
@@ -133,43 +142,43 @@ done
 echo "Unmounting ${disk} ..."
 diskutil unmountDisk /dev/${disk}s1
 diskutil unmountDisk /dev/${disk}
-echo "Flashing $image to ${disk} ..."
+echo "Flashing ${image} to ${disk} ..."
 pv=`which pv 2>/dev/null`
 if [ $? -eq 0 ]; then
   # this sudo here is used for a login without pv's progress bar
   # hiding the password prompt
-  size=`sudo stat -f %z $image`
-  cat $image | pv -s $size | sudo dd bs=1m of=/dev/r${disk}
+  size=`sudo stat -f %z ${image}`
+  cat ${image} | pv -s ${size} | sudo dd bs=1m of=/dev/r${disk}
 else
   echo "No `pv` command found, so no progress available."
   echo "Press CTRL+T if you want to see the current info of dd command."
-  sudo dd bs=1m if=$image of=/dev/r${disk}
+  sudo dd bs=1m if=${image} of=/dev/r${disk}
 fi
 
 boot=$(df | grep /dev/${disk}s1 | sed 's,.*/Volumes,/Volumes,')
-if [ "$boot" == "" ]; then
-  while [ "$boot" == "" ]; do
+if [ "${boot}" == "" ]; then
+  while [ "${boot}" == "" ]; do
     sleep 1
     boot=$(df | grep /dev/${disk}s1 | sed 's,.*/Volumes,/Volumes,')
   done
 fi
 
-if [ -f "$OCCI_CONFIG" ]; then
-  echo "Copying $OCCI_CONFIG to ${boot}/occidentalis.txt ..."
-  cp "$OCCI_CONFIG"  "${boot}/occidentalis.txt"
+if [ -f "${OCCI_CONFIG}" ]; then
+  echo "Copying ${OCCI_CONFIG} to ${boot}/occidentalis.txt ..."
+  cp "${OCCI_CONFIG}"  "${boot}/occidentalis.txt"
 fi
 
-if [ ! -z $SD_HOSTNAME ]; then
-  echo "Set hostname=$SD_HOSTNAME"
-  sed -i -e "s/.*hostname.*=.*\$/hostname=$SD_HOSTNAME/" "${boot}/occidentalis.txt"
+if [ ! -z ${SD_HOSTNAME} ]; then
+  echo "Set hostname=${SD_HOSTNAME}"
+  sed -i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
 fi
-if [ ! -z $WIFI_SSID ]; then
-  echo "Set wifi_ssid=$WIFI_SSID"
-  sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=$WIFI_SSID/" "${boot}/occidentalis.txt"
+if [ ! -z ${WIFI_SSID} ]; then
+  echo "Set wifi_ssid=${WIFI_SSID}"
+  sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
 fi
-if [ ! -z $WIFI_PASSWORD ]; then
-  echo "Set wifi_password=$WIFI_PASSWORD"
-  sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=$WIFI_PASSWORD/" "${boot}/occidentalis.txt"
+if [ ! -z ${WIFI_PASSWORD} ]; then
+  echo "Set wifi_password=${WIFI_PASSWORD}"
+  sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
 fi
 
 echo "Unmounting and ejecting ${disk} ..."
