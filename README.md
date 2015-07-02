@@ -21,7 +21,7 @@ At the moment only Mac OS X and Linux is supported.
 Download the appropriate version for Linux or Mac with this command
 
 ```bash
-wget https://raw.githubusercontent.com/hypriot/flash/master/`uname -s`/flash
+wget https://raw.githubusercontent.com/hypriot/flash/master/$(uname -s)/flash
 chmod +x flash
 sudo mv flash /usr/local/bin/flash
 ```
