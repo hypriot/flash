@@ -25,6 +25,7 @@ OPTIONS:
    --ssid|-s      Set WiFi SSID for this SD image
    --password|-p  Set WiFI password for this SD image
    --device|-d       Card Device
+   --bootconf|-C  Copy this config file to /boot/config.txt
 
 The config file occidentalis.txt should look like
 
@@ -34,6 +35,11 @@ hostname=hypriot-pi
 # basic wireless networking options:
 wifi_ssid=SSID
 wifi_password=12345
+
+The boot config file config.txt has name/value pairs such as:
+
+max_usb_current=1
+
 EOF
     exit 1
 }
@@ -50,6 +56,7 @@ do
 	--ssid) args="${args}-s ";;
 	--password) args="${args}-p ";;
 	--device) args="${args}-d ";;
+	--bootconf) args="${args}-C ";;
 	# pass through anything else
 	*) [[ "${arg:0:1}" == "-" ]] || delim="\""
             args="${args}${delim}${arg}${delim} ";;
@@ -58,10 +65,11 @@ done
 # reset the translated args
 eval set -- $args
 # now we can process with getopt
-while getopts "hc:n:s:p:d:" opt; do
+while getopts "hc:n:s:p:d:C:" opt; do
     case $opt in
         h)  usage ;;
         c)  OCCI_CONFIG=$OPTARG ;;
+        C)  BOOT_CONF=$OPTARG ;;
         n)  SD_HOSTNAME=$OPTARG ;;
         s)  WIFI_SSID=$OPTARG ;;
         p)  WIFI_PASSWORD=$OPTARG ;;
@@ -229,7 +237,12 @@ sudo mount ${dev} ${boot}
 
 if [ -f "${OCCI_CONFIG}" ]; then
     echo "Copying ${OCCI_CONFIG} to ${boot}/occidentalis.txt ..."
-    cp "${OCCI_CONFIG}"  "${boot}/occidentalis.txt"
+    sudo cp "${OCCI_CONFIG}"  "${boot}/occidentalis.txt"
+fi
+
+if [[ -f "${BOOT_CONF}" ]]; then
+    echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
+    sudo cp "${BOOT_CONF}" "${boot}/config.txt"
 fi
 
 if [ ! -z ${SD_HOSTNAME} ]; then
