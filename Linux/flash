@@ -20,12 +20,12 @@ Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
    --help|-h      Show this message
+   --bootconf|-C  Copy this config file to /boot/config.txt
    --config|-c    Copy this config file to /boot/occidentalis.txt
    --hostname|-n  Set hostname for this SD image
    --ssid|-s      Set WiFi SSID for this SD image
    --password|-p  Set WiFI password for this SD image
-   --device|-d       Card Device
-   --bootconf|-C  Copy this config file to /boot/config.txt
+   --device|-d    Card Device
 
 The config file occidentalis.txt should look like
 
