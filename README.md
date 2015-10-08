@@ -8,7 +8,8 @@ This script can
 * wait until a SD card is plugged in
 * search for a SD card plugged into your Computer
 * show progress bar while flashing (if `pv` is installed)
-* copy a optional `occidentalis.txt` file into the boot partition of the SD image
+* copy an optional `occidentalis.txt` file into the boot partition of the SD image
+* copy an optional `config.txt` file into the boot partition of the SD image
 * optional set the hostname of this SD image
 * optional set the WiFi settings as well
 * play a little sound after flashing
@@ -58,6 +59,7 @@ Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
    --help|-h      Show this message
+   --bootconf|-C  Copy this config file to /boot/config.txt
    --config|-c    Copy this config file to /boot/occidentalis.txt
    --hostname|-n  Set hostname for this SD image
    --ssid|-s      Set WiFi SSID for this SD image
@@ -118,6 +120,18 @@ hostname=hypriot-pi
 # basic wireless networking options:
 wifi_ssid=SSID
 wifi_password=12345
+```
+
+## config.txt
+
+The option `--bootconf` can be used to copy a `config.txt` into the SD image before it is unplugged.
+
+With this option it is possible to change some memory, camera, video settings etc. See the [config.txt documentation ](https://www.raspberrypi.org/documentation/configuration/config-txt.md) at raspberrypi.org for more details.
+
+The boot config file config.txt has name/value pairs such as:
+
+```
+max_usb_current=1
 ```
 
 ## Use cases
