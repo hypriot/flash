@@ -71,15 +71,15 @@ OPTIONS:
 This is a complete download and flash cycle with all its steps.
 
 ```
-$ flash http://assets.hypriot.com/hypriot-rpi-20150329-140334.img.zip
-Downloading http://assets.hypriot.com/hypriot-rpi-20150329-140334.img.zip ...
+$ flash http://downloads.hypriot.com/hypriot-rpi-20151004-132414.img.zip
+Downloading http://downloads.hypriot.com/hypriot-rpi-20151004-132414.img.zip ...
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  346M  100  346M    0     0  5643k      0  0:01:02  0:01:02 --:--:-- 5366k
 Uncompressing /tmp/image.img.zip ...
 Archive:  /tmp/image.img.zip
-  inflating: /tmp/hypriot-rpi-20150329-140334.img  
-Use /tmp/hypriot-rpi-20150329-140334.img
+  inflating: /tmp/hypriot-rpi-20151004-132414.img
+Use /tmp/hypriot-rpi-20151004-132414.img
 No SD card found. Please insert SD card, I'll wait for it...
 Filesystem    512-blocks      Used Available Capacity   iused    ifree %iused  Mounted on
 /dev/disk1     974700800 863201064 110987736    89% 107964131 13873467   89%   /
@@ -92,7 +92,7 @@ Is /dev/disk2s1 correct? y
 Unmounting disk2 ...
 Unmount of all volumes on disk2 was successful
 Unmount of all volumes on disk2 was successful
-Flashing /tmp/hypriot-rpi-20150329-140334.img to disk2 ...
+Flashing /tmp/hypriot-rpi-20151004-132414.img to disk2 ...
 Password:
  976MiB 0:01:12 [13.4MiB/s] [=============================================>] 100%
 0+15625 records in
@@ -139,7 +139,7 @@ max_usb_current=1
 ### Flash a compressed SD image from the internet
 
 ```bash
-flash http://assets.hypriot.com/hypriot-rpi-20150329-140334.img.zip
+flash http://downloads.hypriot.com/hypriot-rpi-20151004-132414.img.zip
 ```
 
 ### Flash a compressed SD image from S3 bucket
