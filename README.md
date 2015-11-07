@@ -132,6 +132,7 @@ The boot config file config.txt has name/value pairs such as:
 
 ```
 max_usb_current=1
+hdmi_force_hotplug=1
 ```
 
 ## Use cases
