@@ -120,7 +120,7 @@ else
   fi
 fi
 
-if [[ "${OSTYPE}" != "darwin"*  ]]; then
+if [[ "${OSTYPE}" != "darwin"* ]]; then
   echo "This version does only support Mac."
   echo "Please download correct version from https://github.com/hypriot/flash"
   exit 11
