@@ -101,7 +101,7 @@ if [ -f "/tmp/${filename}" ]; then
   image=/tmp/${filename}
   echo "Using cached image ${image}"
 else
-  if beginswith http:// "${image}" ;then
+  if beginswith http:// "${image}" || beginswith https:// "${image}"; then
       which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
       echo "Downloading ${image} ..."
       curl -L -o /tmp/image.img.${extension} "${image}"
