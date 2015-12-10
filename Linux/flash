@@ -183,7 +183,7 @@ if [[ -z "${disk}" ]]; then
 fi
 
 
-df
+df -h
 while true; do
     echo ""
     read -p "Is ${disk} correct? " yn
