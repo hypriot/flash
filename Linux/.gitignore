@@ -1,0 +1,16 @@
+NODE_NAMES
+NODE_NAME
+NODE2_NAME
+IMG
+DEVICE
+*.img
+*.zip
+WIFI_NETWORK
+WIFI_NETWORK_PASSWORD
+CL_MASTER
+CL_MASTER_NAME
+MY_NET
+master
+mkoverlay
+serveindex
+dockeruipull

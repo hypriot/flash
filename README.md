@@ -162,3 +162,76 @@ Then unplug the SD card from your computer, plug it into your Pi and boot your P
 ```bash
 ssh pi@mypi.local
 ```
+
+### Makefile usage
+
+###### Everything from here on is a repeat of above using the makefile instead for repeatability
+
+First stick the SDCARD in use `dmesg` to ensure that it is `/dev/mmcblk0` you’ll see some lines like the following in the dmesg
+
+```
+[13943.322789] mmcblk0: mmc0:e624 SU16G 14.8 GiB 
+[13943.331703]  mmcblk0: p1 p2
+[14383.049094]  mmcblk0: p1 p2
+```
+Now flash your master node, you will be prompted for details
+
+```
+make master
+```
+
+Then make a subordinate node, repeat giving unique node names for each node
+
+```
+make node
+```
+
+Alternatively make a wifi enabled node, giving wifi details as prompted for them
+
+```
+make wifi
+```
+
+Power the nodes on and you should be able to key the master node with, the password will be ‘hypriot’
+
+```
+make key
+```
+
+Now enter and change the password with the `passwd` utility
+
+```
+make enter
+```
+
+then raise the ui
+```
+make ui
+```
+
+Gaze upon all the wonderment
+
+```
+make show
+```
+
+This last one requires your BROWSER environmanet variables to be set, something like this in `.bashrc` or similar for your shell of choice
+
+```
+export BROWSER=chromium
+```
+
+Now create the overlay
+
+```
+make overlay
+```
+
+And test the overlay
+
+```
+make overlay-test
+```
+
+you should now be able to create more containers at will and they will distribute among your cluster
+
