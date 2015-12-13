@@ -98,14 +98,14 @@ dockerps:
 dockeruipull:
 	$(eval CL_MASTER := $(shell cat CL_MASTER))
 	$(eval CL_MASTER_NAME := $(shell cat CL_MASTER_NAME))
-	docker -H $(CL_MASTER):2378 run -d -p 9000:9000 --env="constraint:node==$(CL_MASTER_NAME)" --name dockerui hypriot/rpi-dockerui -e http://$(CL_MASTER):2378
+	docker -H $(CL_MASTER):2378 run --cidfile=dockeruipull -d -p 9000:9000 --env="constraint:node==$(CL_MASTER_NAME)" --name dockerui hypriot/rpi-dockerui -e http://$(CL_MASTER):2378
 
 rm_node_name:
-	rm NODE2_NAME
-	mv NODE_NAME NODE2_NAME
+	-@rm NODE2_NAME
+	-@mv NODE_NAME NODE2_NAME
 
 cp_master_name:
-	cp CP_MASTER_NAME NODE_NAME
+	cp CL_MASTER_NAME NODE_NAME
 
 add_node_name:
 	cat NODE_NAME>>NODE_NAMES

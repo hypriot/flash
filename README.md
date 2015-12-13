@@ -165,7 +165,16 @@ ssh pi@mypi.local
 
 ### Makefile usage
 
-First flash your master node
+###### Everything from here on is a repeat of above using the makefile instead for repeatability
+
+First stick the SDCARD in use `dmesg` to ensure that it is `/dev/mmcblk0` you’ll see some lines like the following in the dmesg
+
+```
+[13943.322789] mmcblk0: mmc0:e624 SU16G 14.8 GiB 
+[13943.331703]  mmcblk0: p1 p2
+[14383.049094]  mmcblk0: p1 p2
+```
+Now flash your master node, you will be prompted for details
 
 ```
 make master
