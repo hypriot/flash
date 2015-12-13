@@ -227,3 +227,11 @@ Now create the overlay
 make overlay
 ```
 
+And test the overlay
+
+```
+make overlay-test
+```
+
+you should now be able to create more containers at will and they will distribute among your cluster
+
