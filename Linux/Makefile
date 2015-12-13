@@ -159,3 +159,5 @@ MY_NET:
 		read -r -p "Enter the network name of the overlay network[my-net]: " MY_NET; echo "$$MY_NET">>MY_NET; cat MY_NET; \
 	done ;
 
+clean:
+	-@rm -f NODE_NAME NODE2_NAME MY_NET WIFI_NETWORK WIFI_NETWORK_PASSWORD CL_MASTER CL_MASTER_NAME IMG serveindex DEVICE mkoverlay
