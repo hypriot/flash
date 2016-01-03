@@ -114,7 +114,7 @@ else
   if endswith .zip "${image}"; then
     echo "Uncompressing ${image} ..."
     unzip -o "${image}" -d /tmp
-    image=$(unzip -l "${image}" | grep -v Archive: | grep img | cut -c 30-)
+    image=$(unzip -l "${image}" | grep --color=never -v Archive: | grep --color=never img | cut -c 30-)
     image="/tmp/${image}"
     echo "Use ${image}"
   fi
@@ -127,12 +127,12 @@ if [[ "${OSTYPE}" != "darwin"* ]]; then
 fi
 
 # try to find the correct disk of the inserted SD card
-disk=`df | grep -e "disk[0-9]s1" | grep Volumes | cut -c 6-10`
+disk=`df | grep --color=never -e "disk[0-9]s1" | grep --color=never Volumes | cut -c 6-10`
 if [ "${disk}" == "" ]; then
   echo "No SD card found. Please insert SD card, I'll wait for it..."
   while [ "${disk}" == "" ]; do
     sleep 1
-    disk=`df | grep -e "disk[0-9]s1" | grep Volumes | cut -c 6-10`
+    disk=`df | grep --color=never -e "disk[0-9]s1" | grep --color=never Volumes | cut -c 6-10`
   done
 fi
 
@@ -163,11 +163,11 @@ else
   sudo dd bs=1m if=${image} of=/dev/r${disk}
 fi
 
-boot=$(df | grep /dev/${disk}s1 | sed 's,.*/Volumes,/Volumes,')
+boot=$(df | grep --color=never /dev/${disk}s1 | sed 's,.*/Volumes,/Volumes,')
 if [ "${boot}" == "" ]; then
   while [ "${boot}" == "" ]; do
     sleep 1
-    boot=$(df | grep /dev/${disk}s1 | sed 's,.*/Volumes,/Volumes,')
+    boot=$(df | grep --color=never /dev/${disk}s1 | sed 's,.*/Volumes,/Volumes,')
   done
 fi
 
