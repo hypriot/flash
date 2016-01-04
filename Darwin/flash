@@ -181,15 +181,15 @@ if [[ -f "${BOOT_CONF}" ]]; then
   sudo cp "${BOOT_CONF}" "${boot}/config.txt"
 fi
 
-if [ ! -z ${SD_HOSTNAME} ]; then
+if [ ! -z "${SD_HOSTNAME}" ]; then
   echo "Set hostname=${SD_HOSTNAME}"
   sed -i "" -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
 fi
-if [ ! -z ${WIFI_SSID} ]; then
+if [ ! -z "${WIFI_SSID}" ]; then
   echo "Set wifi_ssid=${WIFI_SSID}"
   sed -i "" -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
 fi
-if [ ! -z ${WIFI_PASSWORD} ]; then
+if [ ! -z "${WIFI_PASSWORD}" ]; then
   echo "Set wifi_password=${WIFI_PASSWORD}"
   sed -i "" -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
 fi
