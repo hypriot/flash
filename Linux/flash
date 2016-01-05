@@ -153,7 +153,7 @@ esac
 
 if [[ -z "${disk}" ]]; then
     # try to find the correct disk of the inserted SD card
-    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//'  | sort | uniq`
+    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//'  | sort | uniq | awk '{print $0"0"}'`
 
     if [[ `echo "${disk}"|awk '{print NF}'` -gt 1 ]]; then
 	PS3='Please pick your device: '
@@ -177,7 +177,7 @@ if [[ -z "${disk}" ]]; then
 	echo "No SD card found. Please insert SD card, I'll wait for it..."
 	while [ "${disk}" == "" ]; do
 	    sleep 1
-	    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//'  | sort | uniq`
+	    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'| sed -e 's/p.*$//' | sort | uniq | awk '{print $0"0"}'`
 	done
     fi
 fi
