@@ -107,6 +107,8 @@ Disk /dev/disk2 ejected
 
 ## occidentalis.txt
 
+**WARNING** The following option will change in the near future as we are switching from our RPi-only SD card image to new debian based SD images for different devices. To support all other devices there will be a different file to do similar tasks and we have more functions in mind.
+
 The option `--config` could be used to copy a `occidentalis.txt` into the SD image before it is unplugged.
 
 Many kudos to [Adafruit's occi](https://github.com/adafruit/Adafruit-Occi) package that handles updating hostname and WiFi settings while booting the Raspberry Pi.
