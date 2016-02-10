@@ -137,7 +137,7 @@ while true; do
     done
   fi
 
-  df
+  df -h
   while true; do
     echo ""
     read -p "Is /dev/${disk}s1 correct? " yn
