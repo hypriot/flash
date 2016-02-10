@@ -59,7 +59,7 @@ do
 	--bootconf) args="${args}-C ";;
 	# pass through anything else
 	*) [[ "${arg:0:1}" == "-" ]] || delim="\""
-            args="${args}${delim}${arg}${delim} ";;
+	    args="${args}${delim}${arg}${delim} ";;
     esac
 done
 # reset the translated args
@@ -67,18 +67,18 @@ eval set -- $args
 # now we can process with getopt
 while getopts "hc:n:s:p:d:C:" opt; do
     case $opt in
-        h)  usage ;;
-        c)  OCCI_CONFIG=$OPTARG ;;
-        C)  BOOT_CONF=$OPTARG ;;
-        n)  SD_HOSTNAME=$OPTARG ;;
-        s)  WIFI_SSID=$OPTARG ;;
-        p)  WIFI_PASSWORD=$OPTARG ;;
+	h)  usage ;;
+	c)  OCCI_CONFIG=$OPTARG ;;
+	C)  BOOT_CONF=$OPTARG ;;
+	n)  SD_HOSTNAME=$OPTARG ;;
+	s)  WIFI_SSID=$OPTARG ;;
+	p)  WIFI_PASSWORD=$OPTARG ;;
 	d)  disk=$OPTARG ;;
-        \?) usage ;;
-        :)
-            echo "option -$OPTARG requires an argument"
-            usage
-            ;;
+	\?) usage ;;
+	:)
+	    echo "option -$OPTARG requires an argument"
+	    usage
+	    ;;
     esac
 done
 shift $((OPTIND -1))
@@ -144,65 +144,73 @@ case "${OSTYPE}" in
     Linux)
 	;;
     linux-gnu)
-        ;;
+	;;
     *)
 	echo Unknown OS: ${OSTYPE}
 	exit 11
 	;;
 esac
 
-if [[ -z "${disk}" ]]; then
-    # try to find the correct disk of the inserted SD card
-    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//'  | sort | uniq`
-
-    if [[ `echo "${disk}"|awk '{print NF}'` -gt 1 ]]; then
-	PS3='Please pick your device: '
-	choices="${disk} 'None of the Above'"
-	size=`$echo "$choices" | awk '{print NF}'`
-	select choice in `echo $choices`; do
-	    if [[ $REPLY == ${size} ]]; then
-		disk=""
-		break
-	    fi
-	    if [[ -n `echo ${choices} | grep ${choice}` ]]; then
-		disk=$choice
-		break
-	    fi
-	    echo "Invalid choice. Please try again"
-	    continue
-	done
-    fi
-
-    if [ "${disk}" == "" ]; then
-	echo "No SD card found. Please insert SD card, I'll wait for it..."
-	while [ "${disk}" == "" ]; do
-	    sleep 1
-	    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//'  | sort | uniq`
-	done
-    fi
-fi
-
-
-df
 while true; do
-    echo ""
-    read -p "Is ${disk} correct? " yn
-    case $yn in
-	[Yy]* ) break;;
-	[Nn]* ) exit;;
-	* ) echo "Please answer yes or no.";;
-    esac
-done
+    if [[ -z "${disk}" ]]; then
+	# try to find the correct disk of the inserted SD card
+	disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//'  | sort | uniq`
+
+	if [[ `echo "${disk}"|awk '{print NF}'` -gt 1 ]]; then
+	    PS3='Please pick your device: '
+	    choices="${disk} 'None of the Above'"
+	    size=`$echo "$choices" | awk '{print NF}'`
+	    select choice in `echo $choices`; do
+		if [[ $REPLY == ${size} ]]; then
+		    disk=""
+		    break
+		fi
+		if [[ -n `echo ${choices} | grep ${choice}` ]]; then
+		    disk=$choice
+		    break
+		fi
+		echo "Invalid choice. Please try again"
+		continue
+	    done
+	fi
+
+	if [ "${disk}" == "" ]; then
+	    echo "No SD card found. Please insert SD card, I'll wait for it..."
+	    while [ "${disk}" == "" ]; do
+		sleep 1
+		disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//'  | sort | uniq`
+	    done
+	fi
+    fi
 
 
-# paranoia sync before umounting
-echo "Synchronizing Filesystems"
-sudo sync; sudo sync; sudo sync
+    df
+    while true; do
+	echo ""
+	read -p "Is ${disk} correct? " yn
+	case $yn in
+	    [Yy]* ) break;;
+	    [Nn]* ) exit;;
+	    * ) echo "Please answer yes or no.";;
+	esac
+    done
 
-echo "Unmounting ${disk} ..."
-for i in `df |grep ${disk} | awk '{print $NF}'`
-do
-    sudo umount $i
+
+    # paranoia sync before umounting
+    echo "Synchronizing Filesystems"
+    sudo sync; sudo sync; sudo sync
+
+    writable=$(ls -l ${disk} | cut -c 3)
+    echo "Unmounting ${disk} ..."
+    for i in `df |grep ${disk} | awk '{print $NF}'`
+    do
+	sudo umount $i
+    done
+    if [ "$writable" == "w" ]; then
+	break
+    else
+	echo "The SD card is write protected. Please eject, remove protection and insert again."
+    fi
 done
 
 echo "Flashing ${image} to ${disk} ..."
