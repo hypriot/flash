@@ -111,7 +111,7 @@ else
     exit 10
   fi
 
-  if endswith .zip "${image}"; then
+  if [[ "$(file ${image})" == *"Zip archive"* ]]; then
     echo "Uncompressing ${image} ..."
     unzip -o "${image}" -d /tmp
     image=$(unzip -l "${image}" | grep --color=never -v Archive: | grep --color=never img | cut -c 30-)
