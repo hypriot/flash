@@ -34,6 +34,7 @@ The `flash` script needs optional tools
 * `curl` - if you want to flash directly with an HTTP URL
 * `aws` - if you want to flash directly from an AWS S3 bucket
 * `pv` - to see a progress bar while flashing with the `dd` command
+* `unzip` - to extract zip files.
 
 #### Mac
 
@@ -45,7 +46,7 @@ brew install awscli
 #### Linux
 
 ```bash
-sudo apt-get install -y pv curl python-pip
+sudo apt-get install -y pv curl python-pip unzip
 sudo pip install awscli
 ```
 
