@@ -120,7 +120,7 @@ else
       exit 10
   fi
 
-  if endswith .zip "${image}" ;then
+  if [[ "$(file ${image})" == *"Zip archive"* ]]; then
       which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
       echo "Uncompressing ${image} ..."
       unzip -o "${image}" -d /tmp
