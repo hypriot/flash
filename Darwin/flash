@@ -151,7 +151,7 @@ while true; do
   echo "Unmounting ${disk} ..."
   diskutil unmountDisk /dev/${disk}s1
   diskutil unmountDisk /dev/${disk}
-  writable=$(ls -l /dev/disk2s1 | cut -c 3)
+  writable=$(ls -l /dev/${disk}s1 | cut -c 3)
   if [ "$writable" == "w" ]; then
     break
   else
