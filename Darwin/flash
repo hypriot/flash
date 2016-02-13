@@ -88,8 +88,8 @@ filename=$(basename "${image}")
 extension="${filename##*.}"
 filename="${filename%.*}"
 
-if [ -f "/tmp/${filename}" ]; then
-  image=/tmp/${filename}
+if [ -f "/tmp/${filename}.${extension}" ]; then
+  image=/tmp/${filename}.${extension}
   echo "Using cached image ${image}"
 else
   if beginswith http:// "${image}" || beginswith https:// "${image}"; then
