@@ -124,7 +124,7 @@ else
       which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
       echo "Uncompressing ${image} ..."
       unzip -o "${image}" -d /tmp
-      image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk '{print $NF}')
+      image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
       image="/tmp/${image}"
       echo "Use ${image}"
   fi
