@@ -21,11 +21,20 @@ Flash a local or remote Raspberry Pi SD card image.
 OPTIONS:
    --help|-h      Show this message
    --bootconf|-C  Copy this config file to /boot/config.txt
-   --config|-c    Copy this config file to /boot/occidentalis.txt
+   --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
    --hostname|-n  Set hostname for this SD image
    --ssid|-s      Set WiFi SSID for this SD image
    --password|-p  Set WiFI password for this SD image
    --device|-d    Card Device
+
+For HypriotOS devices:
+
+The config file device-init.yaml should look like
+
+hostname: black-pearl
+
+
+For Raspberry Pi until Hector release:
 
 The config file occidentalis.txt should look like
 
@@ -68,7 +77,7 @@ eval set -- $args
 while getopts "hc:n:s:p:d:C:" opt; do
     case $opt in
         h)  usage ;;
-        c)  OCCI_CONFIG=$OPTARG ;;
+        c)  CONFIG_FILE=$OPTARG ;;
         C)  BOOT_CONF=$OPTARG ;;
         n)  SD_HOSTNAME=$OPTARG ;;
         s)  WIFI_SSID=$OPTARG ;;
@@ -235,9 +244,14 @@ fi
 echo "Mounting ${dev} to customize"
 sudo mount ${dev} ${boot}
 
-if [ -f "${OCCI_CONFIG}" ]; then
-    echo "Copying ${OCCI_CONFIG} to ${boot}/occidentalis.txt ..."
-    sudo cp "${OCCI_CONFIG}"  "${boot}/occidentalis.txt"
+if [ -f "${CONFIG_FILE}" ]; then
+  if [ "${CONFIG_FILE}" == *"occi"* ]; then
+    echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
+    sudo cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
+  else
+    echo "Copying ${CONFIG_FILE} to ${boot}/device-init.yaml ..."
+    sudo cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
+  fi
 fi
 
 if [[ -f "${BOOT_CONF}" ]]; then
@@ -245,17 +259,27 @@ if [[ -f "${BOOT_CONF}" ]]; then
     sudo cp "${BOOT_CONF}" "${boot}/config.txt"
 fi
 
-if [ ! -z "${SD_HOSTNAME}" ]; then
+if [ -f "${boot}/device-init.yaml" ]; then
+  if [ ! -z "${SD_HOSTNAME}" ]; then
+    echo "Set hostname=${SD_HOSTNAME}"
+    sudo sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
+  fi
+fi
+
+# legacy: /boot/occidentalis.txt of old Hector release
+if [ -f "${boot}/occidentalis.txt" ]; then
+  if [ ! -z "${SD_HOSTNAME}" ]; then
     echo "Set hostname=${SD_HOSTNAME}"
     sudo sed -i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
-fi
-if [ ! -z "${WIFI_SSID}" ]; then
+  fi
+  if [ ! -z "${WIFI_SSID}" ]; then
     echo "Set wifi_ssid=${WIFI_SSID}"
     sudo sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
-fi
-if [ ! -z "${WIFI_PASSWORD}" ]; then
+  fi
+  if [ ! -z "${WIFI_PASSWORD}" ]; then
     echo "Set wifi_password=${WIFI_PASSWORD}"
     sudo sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
+  fi
 fi
 
 sudo sync;sudo sync; sudo sync
