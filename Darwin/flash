@@ -111,11 +111,17 @@ else
     exit 10
   fi
 
-  if [[ "$(file ${image})" == *"Zip archive"* ]]; then
+  if [[ "$(file "${image}")" == *"Zip archive"* ]]; then
     echo "Uncompressing ${image} ..."
     unzip -o "${image}" -d /tmp
     image=$(unzip -l "${image}" | grep --color=never -v Archive: | grep --color=never img | awk 'NF>1{print $NF}')
     image="/tmp/${image}"
+    echo "Use ${image}"
+  fi
+  if [[ "$(file "${image}")" == *"xz compressed data"* ]]; then
+    echo "Uncompressing ${image} ..."
+    xz -d "${image}" -c >/tmp/image.img
+    image=/tmp/image.img
     echo "Use ${image}"
   fi
 fi
