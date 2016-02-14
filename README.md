@@ -3,6 +3,8 @@ Command line script to flash SD card images for the Raspberry Pi.
 
 The typical workflow looks like this:
 
+[![asciicast](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w.png)](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w)
+
 1. Run `flash http://downloads.hypriot.com/hypriot-rpi-20151115-132854.img.zip`
 2. Insert SD card to your notebook
 3. Press RETURN
