@@ -97,8 +97,8 @@ filename=$(basename "${image}")
 extension="${filename##*.}"
 filename="${filename%.*}"
 
-if [ -f "/tmp/${filename}.${extension}" ]; then
-  image=/tmp/${filename}.${extension}
+if [ -f "/tmp/${filename}" ]; then
+  image=/tmp/${filename}
   echo "Using cached image ${image}"
 else
   if beginswith http:// "${image}" || beginswith https:// "${image}"; then
@@ -180,12 +180,12 @@ pv=`which pv 2>/dev/null`
 if [ $? -eq 0 ]; then
   # this sudo here is used for a login without pv's progress bar
   # hiding the password prompt
-  size=`sudo stat -f %z ${image}`
-  cat ${image} | pv -s ${size} | sudo dd bs=1m of=/dev/r${disk}
+  size=`sudo /usr/bin/stat -f %z ${image}`
+  cat ${image} | pv -s ${size} | sudo /bin/dd bs=1m of=/dev/r${disk}
 else
   echo "No `pv` command found, so no progress available."
   echo "Press CTRL+T if you want to see the current info of dd command."
-  sudo dd bs=1m if=${image} of=/dev/r${disk}
+  sudo /bin/dd bs=1m if=${image} of=/dev/r${disk}
 fi
 
 boot=$(df | grep --color=never "/dev/${disk}s1" | sed 's,.*/Volumes,/Volumes,')
