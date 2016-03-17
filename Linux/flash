@@ -192,7 +192,12 @@ if [[ -z "${disk}" ]]; then
 fi
 
 
-df -h
+if [[ -x `which lsblk` ]]; then
+    lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
+else
+    df
+fi
+
 while true; do
     echo ""
     read -p "Is ${disk} correct? " yn
