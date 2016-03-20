@@ -7,25 +7,25 @@
 
 error()
 {
-    echo $1
-    exit $2
+  echo "$1"
+  exit "$2"
 }
 
 usage()
 {
-    cat << EOF
+  cat << EOF
 usage: $0 [options] name-of-rpi.img
 
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-   --help|-h      Show this message
-   --bootconf|-C  Copy this config file to /boot/config.txt
-   --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
-   --hostname|-n  Set hostname for this SD image
-   --ssid|-s      Set WiFi SSID for this SD image
-   --password|-p  Set WiFI password for this SD image
-   --device|-d    Card Device
+  --help|-h      Show this message
+  --bootconf|-C  Copy this config file to /boot/config.txt
+  --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n  Set hostname for this SD image
+  --ssid|-s      Set WiFi SSID for this SD image
+  --password|-p  Set WiFI password for this SD image
+  --device|-d    Card Device
 
 For HypriotOS devices:
 
@@ -50,45 +50,45 @@ The boot config file config.txt has name/value pairs such as:
 max_usb_current=1
 
 EOF
-    exit 1
+  exit 1
 }
 
 # translate long options to short
 for arg
 do
-    delim=""
-    case "$arg" in
-	--help) args="${args}-h ";;
-	--verbose) args="${args}-v ";;
-	--config) args="${args}-c ";;
-	--hostname) args="${args}-n ";;
-	--ssid) args="${args}-s ";;
-	--password) args="${args}-p ";;
-	--device) args="${args}-d ";;
-	--bootconf) args="${args}-C ";;
-	# pass through anything else
-	*) [[ "${arg:0:1}" == "-" ]] || delim="\""
-	    args="${args}${delim}${arg}${delim} ";;
-    esac
+  delim=""
+  case "$arg" in
+    --help) args="${args}-h ";;
+    --verbose) args="${args}-v ";;
+    --config) args="${args}-c ";;
+    --hostname) args="${args}-n ";;
+    --ssid) args="${args}-s ";;
+    --password) args="${args}-p ";;
+    --device) args="${args}-d ";;
+    --bootconf) args="${args}-C ";;
+    # pass through anything else
+    *) [[ "${arg:0:1}" == "-" ]] || delim="\""
+      args="${args}${delim}${arg}${delim} ";;
+  esac
 done
 # reset the translated args
-eval set -- $args
+eval set -- "$args"
 # now we can process with getopt
 while getopts "hc:n:s:p:d:C:" opt; do
-    case $opt in
-        h)  usage ;;
-        c)  CONFIG_FILE=$OPTARG ;;
-        C)  BOOT_CONF=$OPTARG ;;
-        n)  SD_HOSTNAME=$OPTARG ;;
-        s)  WIFI_SSID=$OPTARG ;;
-        p)  WIFI_PASSWORD=$OPTARG ;;
-        d)  disk=$OPTARG ;;
-        \?) usage ;;
-        :)
-	        echo "option -$OPTARG requires an argument"
-	        usage
-    	    ;;
-    esac
+  case $opt in
+    h)  usage ;;
+    c)  CONFIG_FILE=$OPTARG ;;
+    C)  BOOT_CONF=$OPTARG ;;
+    n)  SD_HOSTNAME=$OPTARG ;;
+    s)  WIFI_SSID=$OPTARG ;;
+    p)  WIFI_PASSWORD=$OPTARG ;;
+    d)  disk=$OPTARG ;;
+    \?) usage ;;
+    :)
+      echo "option -$OPTARG requires an argument"
+      usage
+      ;;
+  esac
 done
 shift $((OPTIND -1))
 
@@ -96,7 +96,6 @@ beginswith() { case $2 in $1*) true;; *) false;; esac; }
 endswith() { case $2 in *$1) true;; *) false;; esac; }
 
 image=$1
-occi=$2
 
 if [[ "$1" == "--help" ]]; then
   usage
@@ -111,134 +110,131 @@ if [ -f "/tmp/${filename}" ]; then
   echo "Using cached image ${image}"
 else
   if beginswith http:// "${image}" || beginswith https:// "${image}"; then
-      which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
-      echo "Downloading ${image} ..."
-      curl -L -o /tmp/image.img.${extension} "${image}"
-      image=/tmp/image.img.${extension}
+    which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
+    echo "Downloading ${image} ..."
+    curl -L -o "/tmp/image.img.${extension}" "${image}"
+    image=/tmp/image.img.${extension}
   fi
 
   if beginswith s3:// "${image}" ;then
-       which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
-       echo "Downloading ${image} ..."
-       aws s3 cp "${image}" /tmp/image.img.${extension}
-       image=/tmp/image.img.${extension}
+    which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
+    echo "Downloading ${image} ..."
+    aws s3 cp "${image}" "/tmp/image.img.${extension}"
+    image=/tmp/image.img.${extension}
   fi
 
   if [ ! -f "${image}" ]; then
-      echo "File not found."
-      exit 10
+    echo "File not found."
+    exit 10
   fi
 
-  if [[ "$(file ${image})" == *"Zip archive"* ]]; then
-      which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
-      echo "Uncompressing ${image} ..."
-      unzip -o "${image}" -d /tmp
-      image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
-      image="/tmp/${image}"
-      echo "Use ${image}"
+  if [[ "$(file "${image}")" == *"Zip archive"* ]]; then
+    which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
+    echo "Uncompressing ${image} ..."
+    unzip -o "${image}" -d /tmp
+    image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
+    image="/tmp/${image}"
+    echo "Use ${image}"
   fi
 fi
 
 # Figure out our OS
 if [[ -z "${OSTYPE}" ]]; then
-    OSTYPE=`uname -s`
+  OSTYPE=$(uname -s)
 fi
 
 case "${OSTYPE}" in
-    darwin)
-	echo This version does not support Mac.
-  echo Download Mac version from https://github.com/hypriot/flash instead.
-	exit 11
-	;;
-    Linux)
-	;;
-    linux-gnu*)
-        ;;
-    *)
-	echo Unknown OS: ${OSTYPE}
-	exit 11
-	;;
+  darwin)
+    echo This version does not support Mac.
+    echo Download Mac version from https://github.com/hypriot/flash instead.
+    exit 11
+    ;;
+  Linux)
+    ;;
+  linux-gnu*)
+    ;;
+  *)
+    echo Unknown OS: "${OSTYPE}"
+    exit 11
+    ;;
 esac
 
 while true; do
-    if [[ -z "${disk}" ]]; then
-	# try to find the correct disk of the inserted SD card
-	disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//'  | sort | uniq`
+  if [[ -z "${disk}" ]]; then
+    # try to find the correct disk of the inserted SD card
+    disk=$(df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//' | sort | uniq)
 
-	if [[ `echo "${disk}"|awk '{print NF}'` -gt 1 ]]; then
-	    PS3='Please pick your device: '
-	    choices="${disk} 'None of the Above'"
-	    size=`$echo "$choices" | awk '{print NF}'`
-	    select choice in `echo $choices`; do
-		if [[ $REPLY == ${size} ]]; then
-		    disk=""
-		    break
-		fi
-		if [[ -n `echo ${choices} | grep ${choice}` ]]; then
-		    disk=$choice
-		    break
-		fi
-		echo "Invalid choice. Please try again"
-		continue
-	    done
-	fi
-
-	if [ "${disk}" == "" ]; then
-	    echo "No SD card found. Please insert SD card, I'll wait for it..."
-	    while [ "${disk}" == "" ]; do
-		sleep 1
-		disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//'  | sort | uniq`
-	    done
-	fi
+    if [[ $(echo "${disk}"|awk '{print NF}') -gt 1 ]]; then
+      PS3='Please pick your device: '
+      choices="${disk} 'None of the Above'"
+      size=$(echo "$choices" | awk '{print NF}')
+      select choice in $choices; do
+        if [[ $REPLY == "${size}" ]]; then
+          disk=""
+          break
+        fi
+        if [[ -n $(echo ${choices} | grep ${choice}) ]]; then
+          disk=$choice
+          break
+        fi
+        echo "Invalid choice. Please try again"
+        continue
+      done
     fi
 
+    if [ "${disk}" == "" ]; then
+      echo "No SD card found. Please insert SD card, I'll wait for it..."
+      while [ "${disk}" == "" ]; do
+        sleep 1
+        disk=$(df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//' | sort | uniq)
+      done
+    fi
+  fi
 
-if [[ -x `which lsblk` ]]; then
+  if [[ -x $(which lsblk) ]]; then
     lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
-else
+  else
     df -h
-fi
+  fi
 
-    while true; do
-	echo ""
-	read -p "Is ${disk} correct? " yn
-	case $yn in
-	    [Yy]* ) break;;
-	    [Nn]* ) exit;;
-	    * ) echo "Please answer yes or no.";;
-	esac
-    done
+  while true; do
+    echo ""
+    read -rp "Is ${disk} correct? " yn
+    case $yn in
+      [Yy]* ) break;;
+      [Nn]* ) exit;;
+      * ) echo "Please answer yes or no.";;
+    esac
+  done
 
+  # paranoia sync before umounting
+  echo "Synchronizing Filesystems"
+  sudo sync; sudo sync; sudo sync
 
-    # paranoia sync before umounting
-    echo "Synchronizing Filesystems"
-    sudo sync; sudo sync; sudo sync
+  writable=$(grep "${disk}" /etc/mtab | grep -e "\( rw,\|,rw\)")
 
-    writable=$(grep ${disk} /etc/mtab | grep -e "\( rw,\|,rw\)")
-
-    echo "Unmounting ${disk} ..."
-    for i in `df |grep ${disk} | awk '{print $NF}'`
-    do
-	sudo umount $i
-    done
-    if [ "$writable" ]; then
-	break
-    else
-	echo "The SD card is write protected. Please eject, remove protection and insert again."
-    fi
+  echo "Unmounting ${disk} ..."
+  for i in $(df |grep "${disk}" | awk '{print $NF}')
+  do
+    sudo umount "$i"
+  done
+  if [ "$writable" ]; then
+    break
+  else
+    echo "The SD card is write protected. Please eject, remove protection and insert again."
+  fi
 done
 
 echo "Flashing ${image} to ${disk} ..."
-pv=`which pv 2>/dev/null`
-if [ $? -eq 0 ]; then
-    # this sudo here is used for a login without pv's progress bar
-    # hiding the password prompt
-    size=`sudo stat -c %s ${image}`
-    cat ${image} | pv -s ${size} | sudo dd bs=1M of=${disk}
+if [[ -x $(which pv) ]]; then
+  # this sudo here is used for a login without pv's progress bar
+  # hiding the password prompt
+  size=$(sudo stat -c %s "${image}")
+  pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${disk}"
 else
-    echo "No `pv` command found, so no progress available."
-    echo "Press CTRL+T if you want to see the current info of dd command."
-    sudo dd bs=1M if=${image} of=${disk}
+  echo "No 'pv' command found, so no progress available."
+  echo "Press CTRL+T if you want to see the current info of dd command."
+  sudo dd bs=1M "if=${image}" "of=${disk}"
 fi
 
 echo "Flushing Buffers"
@@ -249,17 +245,17 @@ boot=/tmp/mnt
 echo "Mounting Disk"
 mkdir -p ${boot}
 
-if beginswith /dev/mmcblk ${disk} ;then
-    dev="${disk}p1"
+if beginswith /dev/mmcblk "${disk}" ;then
+  dev="${disk}p1"
 else
-    dev="${disk}1"
+  dev="${disk}1"
 fi
 
 echo "Mounting ${dev} to customize"
-sudo mount ${dev} ${boot}
+sudo mount "${dev}" "${boot}"
 
 if [ -f "${CONFIG_FILE}" ]; then
-  if [ "${CONFIG_FILE}" == *"occi"* ]; then
+  if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
     echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
     sudo cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
   else
@@ -269,8 +265,8 @@ if [ -f "${CONFIG_FILE}" ]; then
 fi
 
 if [[ -f "${BOOT_CONF}" ]]; then
-    echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
-    sudo cp "${BOOT_CONF}" "${boot}/config.txt"
+  echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
+  sudo cp "${BOOT_CONF}" "${boot}/config.txt"
 fi
 
 if [ -f "${boot}/device-init.yaml" ]; then
@@ -301,13 +297,13 @@ sudo sync;sudo sync; sudo sync
 echo "Unmounting ${disk} ..."
 sleep 1
 
-for i in `df|grep ${disk}|awk '{print $1}'`
+for i in $(df | grep "${disk}" | awk '{print $1}')
 do
-    sudo umount $i
+  sudo umount "$i"
 done
 
 if [ $? -eq 0 ]; then
-    echo "Finished."
+  echo "Finished."
 else
-    echo "Someting went wrong."
+  echo "Someting went wrong."
 fi
