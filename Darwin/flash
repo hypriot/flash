@@ -3,21 +3,20 @@
 # Stefan Scherer - scherer_stefan@icloud.com
 # MIT License
 
-
 usage()
 {
-cat << EOF
+  cat << EOF
 usage: $0 [options] name-of-rpi.img
 
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-   --help|-h      Show this message
-   --bootconf|-C  Copy this config file to /boot/config.txt
-   --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
-   --hostname|-n  Set hostname for this SD image
-   --ssid|-s      Set WiFi SSID for this SD image
-   --password|-p  Set WiFI password for this SD image
+  --help|-h      Show this message
+  --bootconf|-C  Copy this config file to /boot/config.txt
+  --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n  Set hostname for this SD image
+  --ssid|-s      Set WiFi SSID for this SD image
+  --password|-p  Set WiFI password for this SD image
 
 For HypriotOS devices:
 
@@ -42,7 +41,7 @@ The boot config file config.txt has name/value pairs such as:
 max_usb_current=1
 
 EOF
-exit 1
+  exit 1
 }
 
 # translate long options to short
@@ -63,7 +62,7 @@ do
   esac
 done
 # reset the translated args
-eval set -- $args
+eval set -- "$args"
 # now we can process with getopt
 while getopts ":hc:n:s:p:C:" opt; do
   case $opt in
@@ -75,8 +74,8 @@ while getopts ":hc:n:s:p:C:" opt; do
     p)  WIFI_PASSWORD=$OPTARG ;;
     \?) usage ;;
     :)
-    echo "option -$OPTARG requires an argument"
-    usage
+      echo "option -$OPTARG requires an argument"
+      usage
     ;;
   esac
 done
@@ -86,8 +85,6 @@ beginswith() { case $2 in $1*) true;; *) false;; esac; }
 endswith() { case $2 in *$1) true;; *) false;; esac; }
 
 image=$1
-
-occi=$2
 
 if [ "$1" == "--help" ]; then
   usage
@@ -104,14 +101,14 @@ else
   if beginswith http:// "${image}" || beginswith https:// "${image}"; then
     which curl >/dev/null || (echo "Error: curl not found. Aborting" && exit 1)
     echo "Downloading ${image} ..."
-    curl -L -o /tmp/image.img.${extension} "${image}"
+    curl -L -o "/tmp/image.img.${extension}" "${image}"
     image=/tmp/image.img.${extension}
   fi
 
   if beginswith s3:// "${image}"; then
     which aws >/dev/null || (echo "Error: aws not found. Aborting" && exit 1)
     echo "Downloading ${image} ..."
-    aws s3 cp "${image}" /tmp/image.img.${extension}
+    aws s3 cp "${image}" "/tmp/image.img.${extension}"
     image=/tmp/image.img.${extension}
   fi
 
@@ -155,7 +152,7 @@ while true; do
   df -h
   while true; do
     echo ""
-    read -p "Is /dev/${disk} correct? " yn
+    read -rp "Is /dev/${disk} correct? " yn
     case $yn in
       [Yy]* ) break;;
       [Nn]* ) exit;;
@@ -164,8 +161,8 @@ while true; do
   done
 
   echo "Unmounting ${disk} ..."
-  diskutil unmountDisk /dev/${disk}s1
-  diskutil unmountDisk /dev/${disk}
+  diskutil unmountDisk "/dev/${disk}s1"
+  diskutil unmountDisk "/dev/${disk}"
   readonlymedia=$(diskutil info "/dev/${disk}" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
   if [ "$readonlymedia" == "No" ]; then
     break
@@ -176,16 +173,15 @@ while true; do
 done
 
 echo "Flashing ${image} to ${disk} ..."
-pv=`which pv 2>/dev/null`
-if [ $? -eq 0 ]; then
+if [[ -x $(which pv) ]]; then
   # this sudo here is used for a login without pv's progress bar
   # hiding the password prompt
-  size=`sudo /usr/bin/stat -f %z ${image}`
-  cat ${image} | pv -s ${size} | sudo /bin/dd bs=1m of=/dev/r${disk}
+  size=$(sudo /usr/bin/stat -f %z ${image})
+  pv -s "${size}" < ${image} | sudo /bin/dd bs=1m "of=/dev/r${disk}"
 else
-  echo "No `pv` command found, so no progress available."
+  echo "No 'pv' command found, so no progress available."
   echo "Press CTRL+T if you want to see the current info of dd command."
-  sudo /bin/dd bs=1m if=${image} of=/dev/r${disk}
+  sudo /bin/dd bs=1m if=${image} "of=/dev/r${disk}"
 fi
 
 boot=$(df | grep --color=never "/dev/${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
@@ -204,7 +200,7 @@ fi
 # customize for first boot
 if [ "${boot}" ]; then
   if [ -f "${CONFIG_FILE}" ]; then
-    if [ "${CONFIG_FILE}" == *"occi"* ]; then
+    if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
       echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
       cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
     else
@@ -244,9 +240,9 @@ fi
 
 echo "Unmounting and ejecting ${disk} ..."
 sleep 1
-diskutil unmountDisk /dev/${disk}s1
-diskutil unmountDisk /dev/${disk}s2
-diskutil eject /dev/${disk}
+diskutil unmountDisk "/dev/${disk}s1"
+diskutil unmountDisk "/dev/${disk}s2"
+diskutil eject "/dev/${disk}"
 if [ $? -eq 0 ]; then
   afplay /System/Library/Sounds/Bottle.aiff
   echo "🍺  Finished."
