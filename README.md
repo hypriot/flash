@@ -175,3 +175,17 @@ Then unplug the SD card from your computer, plug it into your Pi and boot your P
 ```bash
 ssh pi@mypi.local
 ```
+
+## Development
+
+Pull requests and other feedback is always welcome. The `flash` tool should fit our all needs and environments.
+
+### Test Linux from Mac
+
+As I only have a MacBookPro where I started to develop the `flash` tool it is hard for me to test Linux issues. But with some help I found a way to spin up a VirtualBox Vagrant box with Ubuntu that maps the internal Apple SD card reader into the VM. Thanks to [Flexshot](https://github.com/Flexshot) for the helper functions I found in [NextThingCo/CHIP-SDK#15](https://github.com/NextThingCo/CHIP-SDK/pull/15).
+
+Check the vendor ID and product ID in "About this Mac" -> System Report ... -> Card Reader. I found the vendor ID 0x05ac and product ID 0x8406 can be found in the `Vagrantfile`.
+
+```
+vagrant up --provider virtualbox
+```
