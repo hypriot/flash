@@ -193,7 +193,12 @@ while true; do
     fi
 
 
+if [[ -x `which lsblk` ]]; then
+    lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
+else
     df -h
+fi
+
     while true; do
 	echo ""
 	read -p "Is ${disk} correct? " yn
