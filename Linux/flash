@@ -5,6 +5,8 @@
 # Linux Version by Matt Williams - matt@matthewkwilliams.com
 # MIT License
 
+set -eo pipefail
+
 error()
 {
   echo "$1"
@@ -101,11 +103,14 @@ shift $((OPTIND -1))
 beginswith() { case $2 in $1*) true;; *) false;; esac; }
 endswith() { case $2 in *$1) true;; *) false;; esac; }
 
-image=$1
+if [ $# -lt 1 ]; then
+  usage
+fi
 
 if [[ "$1" == "--help" ]]; then
   usage
 fi
+image=$1
 
 filename=$(basename "${image}")
 extension="${filename##*.}"
