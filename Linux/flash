@@ -207,10 +207,6 @@ while true; do
     esac
   done
 
-  # paranoia sync before umounting
-  echo "Synchronizing Filesystems"
-  sudo sync; sudo sync; sudo sync
-
   writable=$(grep "${disk}" /etc/mtab | grep -e "\( rw,\|,rw\)")
 
   echo "Unmounting ${disk} ..."
@@ -237,12 +233,11 @@ else
   sudo dd bs=1M "if=${image}" "of=${disk}"
 fi
 
-echo "Flushing Buffers"
-sudo sync;sudo sync; sudo sync
-
-boot=/tmp/mnt
+echo "Waiting for device..."
+udevadm settle
 
 echo "Mounting Disk"
+boot=/tmp/mnt
 mkdir -p ${boot}
 
 if beginswith /dev/mmcblk "${disk}" ;then
@@ -251,8 +246,10 @@ else
   dev="${disk}1"
 fi
 
-echo "Mounting ${dev} to customize"
+echo "Mounting ${dev} to customize..."
 sudo mount "${dev}" "${boot}"
+echo "Waiting for device..."
+udevadm settle
 
 if [ -f "${CONFIG_FILE}" ]; then
   if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
@@ -291,8 +288,6 @@ if [ -f "${boot}/occidentalis.txt" ]; then
     sudo sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
   fi
 fi
-
-sudo sync;sudo sync; sudo sync
 
 echo "Unmounting ${disk} ..."
 sleep 1
