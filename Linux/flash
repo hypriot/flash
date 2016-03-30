@@ -53,6 +53,12 @@ EOF
   exit 1
 }
 
+if ! sudo sh -c 'command -v hdparm' > /dev/null; then
+  echo "No 'hdparm' command found; please install hdparm by running:"
+  echo "sudo [apt-get|yum|something-else] install hdparm"
+  exit 1
+fi
+
 # translate long options to short
 for arg
 do
@@ -207,7 +213,11 @@ while true; do
     esac
   done
 
-  writable=$(grep "${disk}" /etc/mtab | grep -e "\( rw,\|,rw\)")
+  if sudo hdparm -r "${disk}" | grep -q off; then
+    writable=1
+  else
+    writable=0
+  fi
 
   echo "Unmounting ${disk} ..."
   for i in $(df |grep "${disk}" | awk '{print $NF}')
