@@ -315,5 +315,5 @@ done
 if [ $? -eq 0 ]; then
   echo "Finished."
 else
-  echo "Someting went wrong."
+  echo "Something went wrong."
 fi
