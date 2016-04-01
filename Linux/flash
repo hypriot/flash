@@ -171,43 +171,17 @@ case "${OSTYPE}" in
 esac
 
 while true; do
-  if [[ -z "${disk}" ]]; then
-    # try to find the correct disk of the inserted SD card
-    disk=$(df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//' | sort | uniq)
-
-    if [[ $(echo "${disk}"|awk '{print NF}') -gt 1 ]]; then
-      PS3='Please pick your device: '
-      choices="${disk} 'None of the Above'"
-      size=$(echo "$choices" | awk '{print NF}')
-      select choice in $choices; do
-        if [[ $REPLY == "${size}" ]]; then
-          disk=""
-          break
-        fi
-        if [[ -n $(echo ${choices} | grep ${choice}) ]]; then
-          disk=$choice
-          break
-        fi
-        echo "Invalid choice. Please try again"
-        continue
-      done
-    fi
-
-    if [ "${disk}" == "" ]; then
-      echo "No SD card found. Please insert SD card, I'll wait for it..."
-      while [ "${disk}" == "" ]; do
-        sleep 1
-        disk=$(df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//' | sort | uniq)
-      done
-    fi
-  fi
-
   if [[ -x $(which lsblk) ]]; then
     lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
   else
     df -h
   fi
 
+  if [[ -z "${disk}" ]]; then
+    read -p "Please pick your device: "
+    disk="${REPLY}"
+    [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
+  fi
   while true; do
     echo ""
     read -rp "Is ${disk} correct? " yn
