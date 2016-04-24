@@ -124,6 +124,12 @@ else
     image="/tmp/${image}"
     echo "Use ${image}"
   fi
+  if [[ "$(file "${image}")" == *"gzip compressed data"* ]]; then
+    echo "Uncompressing ${image} ..."
+    gzip -d "${image}" -c >/tmp/image.img
+    image=/tmp/image.img
+    echo "Use ${image}"
+  fi
   if [[ "$(file "${image}")" == *"xz compressed data"* ]]; then
     echo "Uncompressing ${image} ..."
     xz -d "${image}" -c >/tmp/image.img
