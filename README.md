@@ -18,7 +18,7 @@ This script can
 *   wait until a SD card is plugged in
 *   search for a SD card plugged into your Computer
 *   show progress bar while flashing (if `pv` is installed)
-*   copy an optional `occidentalis.txt` file into the boot partition of the SD
+*   copy an optional `device-init.yaml` or `occidentalis.txt` file into the boot partition of the SD
 *   copy an optional `config.txt` file into the boot partition of the SD image
 *   optional set the hostname of this SD image
 *   optional set the WiFi settings as well
@@ -77,7 +77,7 @@ Flash a local or remote Raspberry Pi SD card image.
 OPTIONS:
    --help|-h      Show this message
    --bootconf|-C  Copy this config file to /boot/config.txt
-   --config|-c    Copy this config file to /boot/occidentalis.txt
+   --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
    --hostname|-n  Set hostname for this SD image
    --ssid|-s      Set WiFi SSID for this SD image
    --password|-p  Set WiFI password for this SD image
@@ -121,6 +121,25 @@ Unmount of all volumes on disk2 was successful
 Disk /dev/disk2 ejected
 🍺  Finished.
 ```
+
+## device-init.yaml
+
+The option `--config` could be used to copy a `device-init.yaml` into the SD
+image before it is unplugged. This YAML file can be read by newer HyperiotOS
+SD images.
+
+The config file device-init.yaml should look like
+
+```yaml
+hostname: black-pearl
+wifi:
+  interfaces:
+    wlan0:
+      ssid: "MyNetwork"
+      password: "secret_password"
+```
+
+If you don't want to set any wifi settings, comment out or remove the wlan0, ssid and password.
 
 ## occidentalis.txt
 
