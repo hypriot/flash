@@ -34,7 +34,11 @@ For HypriotOS devices:
 The config file device-init.yaml should look like
 
 hostname: black-pearl
-
+wifi:
+  interfaces:
+    wlan0:
+      ssid: "MyNetwork"
+      password: "secret_password"
 
 For Raspberry Pi until Hector release:
 
@@ -259,6 +263,16 @@ if [ -f "${boot}/device-init.yaml" ]; then
   if [ ! -z "${SD_HOSTNAME}" ]; then
     echo "Set hostname=${SD_HOSTNAME}"
     sudo sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
+  fi
+  if [ ! -z "${WIFI_SSID}" ]; then
+    echo "Set wlan0/ssid=${WIFI_SSID}"
+    /usr/bin/sed -i -e "s/.*wlan0:.*=.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    /usr/bin/sed -i -e "s/.*ssid:.*=.*\$/      ssid: \"${WIFI_SSID}\"/" "${boot}/device-init.yaml"
+  fi
+  if [ ! -z "${WIFI_PASSWORD}" ]; then
+    echo "Set wlan0/password=${WIFI_PASSWORD}"
+    /usr/bin/sed -i -e "s/.*wlan0:.*=.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    /usr/bin/sed -i -e "s/.*password:.*=.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
   fi
 fi
 
