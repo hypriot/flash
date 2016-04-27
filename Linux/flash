@@ -241,8 +241,6 @@ fi
 
 echo "Mounting ${dev} to customize..."
 sudo mount "${dev}" "${boot}"
-echo "Waiting for device..."
-udevadm settle
 
 if [ -f "${CONFIG_FILE}" ]; then
   if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
