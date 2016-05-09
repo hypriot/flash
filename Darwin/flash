@@ -11,12 +11,13 @@ usage: $0 [options] name-of-rpi.img
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-  --help|-h      Show this message
-  --bootconf|-C  Copy this config file to /boot/config.txt
-  --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
-  --hostname|-n  Set hostname for this SD image
-  --ssid|-s      Set WiFi SSID for this SD image
-  --password|-p  Set WiFI password for this SD image
+  --help|-h       Show this message
+  --bootconf|-C   Copy this config file to /boot/config.txt
+  --config|-c     Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n   Set hostname for this SD image
+  --ssid|-s       Set WiFi SSID for this SD image
+  --password|-p   Set WiFI password for this SD image
+  --clusterlab|-l Start Cluster-Lab on boot: true or false
 
 For HypriotOS devices:
 
@@ -60,6 +61,7 @@ do
     --ssid) args="${args}-s ";;
     --password) args="${args}-p ";;
     --bootconf) args="${args}-C ";;
+    --clusterlab) args="${args}-l ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
       args="${args}${delim}${arg}${delim} ";;
@@ -68,7 +70,7 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":hc:n:s:p:C:" opt; do
+while getopts ":hc:n:s:p:C:l:" opt; do
   case $opt in
     h)  usage ;;
     c)  CONFIG_FILE=$OPTARG ;;
@@ -76,6 +78,7 @@ while getopts ":hc:n:s:p:C:" opt; do
     n)  SD_HOSTNAME=$OPTARG ;;
     s)  WIFI_SSID=$OPTARG ;;
     p)  WIFI_PASSWORD=$OPTARG ;;
+    l)  CLUSTERLAB=$OPTARG ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -238,6 +241,10 @@ if [ "${boot}" ]; then
       echo "Set wlan0/password=${WIFI_PASSWORD}"
       /usr/bin/sed -i "" -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
       /usr/bin/sed -i "" -e "s/.*password:.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
+    fi
+    if [ ! -z "${CLUSTERLAB}" ]; then
+      echo "Set Cluster-Lab/run_on_boot={CLUSTERLAB}"
+      /usr/bin/sed -i "" -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
     fi
   fi
 
