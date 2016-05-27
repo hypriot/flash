@@ -263,21 +263,21 @@ fi
 if [ -f "${boot}/device-init.yaml" ]; then
   echo "Setting device-init"
   if [ ! -z "${SD_HOSTNAME}" ]; then
-    echo "Set hostname=${SD_HOSTNAME}"
+    echo "  Set hostname=${SD_HOSTNAME}"
     sudo sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${WIFI_SSID}" ]; then
-    echo "Set wlan0/ssid=${WIFI_SSID}"
+    echo "  Set wlan0/ssid=${WIFI_SSID}"
     sudo sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
     sudo sed -i -e "s/.*ssid:.*\$/      ssid: \"${WIFI_SSID}\"/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${WIFI_PASSWORD}" ]; then
-    echo "Set wlan0/password=${WIFI_PASSWORD}"
+    echo "  Set wlan0/password=${WIFI_PASSWORD}"
     sudo sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
     sudo sed -i -e "s/.*password:.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${CLUSTERLAB}" ]; then
-    echo "Set Cluster-Lab/run_on_boot=${CLUSTERLAB}"
+    echo "  Set Cluster-Lab/run_on_boot=${CLUSTERLAB}"
     sudo sed -i -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
   fi
 fi
@@ -286,15 +286,15 @@ fi
 if [ -f "${boot}/occidentalis.txt" ]; then
   echo "Setting Occidentalis"
   if [ ! -z "${SD_HOSTNAME}" ]; then
-    echo "Set hostname=${SD_HOSTNAME}"
+    echo "  Set hostname=${SD_HOSTNAME}"
     sudo sed -i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
   fi
   if [ ! -z "${WIFI_SSID}" ]; then
-    echo "Set wifi_ssid=${WIFI_SSID}"
+    echo "  Set wifi_ssid=${WIFI_SSID}"
     sudo sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
   fi
   if [ ! -z "${WIFI_PASSWORD}" ]; then
-    echo "Set wifi_password=${WIFI_PASSWORD}"
+    echo "  Set wifi_password=${WIFI_PASSWORD}"
     sudo sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
   fi
 fi
