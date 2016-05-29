@@ -63,7 +63,7 @@ brew install awscli
 #### Linux
 
 ```bash
-sudo apt-get install -y pv curl python-pip unzip
+sudo apt-get install -y pv curl python-pip unzip hdparm
 sudo pip install awscli
 ```
 
