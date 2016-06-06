@@ -1,6 +1,8 @@
 # flash
 
-Command line script to flash SD card images for the Raspberry Pi.
+Command line script to flash SD card images of any kind. 
+
+Note that for some devices (e.g. Raspberry Pi), at the end of the flashing process the tool tries to customize the SD card e.g. it configures a hostname. If this customization is not supported, just ignore the error thrown at this point.
 
 The typical workflow looks like this:
 
