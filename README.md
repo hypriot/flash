@@ -62,7 +62,7 @@ brew install pv
 brew install awscli
 ```
 
-#### Linux
+#### Linux (Debian/Ubuntu)
 
 ```bash
 sudo apt-get install -y pv curl python-pip unzip hdparm
