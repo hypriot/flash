@@ -243,7 +243,7 @@ else
 fi
 
 echo "Mounting ${dev} to customize..."
-FS_TYPE=$(sudo blkid -o value -s TYPE "${dev}")
+FS_TYPE=$(sudo blkid -o value -s TYPE "${dev}" || echo vfat)
 sudo mount -t ${FS_TYPE} "${dev}" "${boot}"
 
 if [ -f "${CONFIG_FILE}" ]; then
