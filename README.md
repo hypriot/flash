@@ -84,6 +84,9 @@ OPTIONS:
    --hostname|-n  Set hostname for this SD image
    --ssid|-s      Set WiFi SSID for this SD image
    --password|-p  Set WiFI password for this SD image
+   --clusterlab|-l Start Cluster-Lab on boot: true or false
+   --device|-d    Card Device
+
 ```
 
 ## How it looks like
