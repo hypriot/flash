@@ -1,3 +1,7 @@
 .vagrant/
 *.img
 image*
+*.yaml
+*.ini
+*.zip
+*.gz
