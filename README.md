@@ -31,16 +31,10 @@ At the moment only Mac OS X and Linux is supported.
 
 ## Installation
 
-For the Mac you will have to install `wget` first
-
-```bash
-brew install wget
-```
-
 Download the appropriate version for Linux or Mac with this command
 
 ```bash
-wget https://raw.githubusercontent.com/hypriot/flash/master/$(uname -s)/flash
+curl -O https://raw.githubusercontent.com/hypriot/flash/master/$(uname -s)/flash
 chmod +x flash
 sudo mv flash /usr/local/bin/flash
 ```
