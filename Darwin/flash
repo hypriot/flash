@@ -275,5 +275,5 @@ if [ $? -eq 0 ]; then
   echo "🍺  Finished."
 else
   afplay /System/Library/Sounds/Basso.aiff
-  echo "👎  Someting went wrong."
+  echo "👎  Something went wrong."
 fi
