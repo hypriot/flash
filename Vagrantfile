@@ -63,6 +63,6 @@ Vagrant.configure(2) do |config|
   end
   config.vm.provision "shell", inline: <<-SHELL
     sudo apt-get update
-    sudo apt-get install -y curl wget unzip pv
+    sudo apt-get install -y curl unzip pv
   SHELL
 end
