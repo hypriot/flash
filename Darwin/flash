@@ -18,6 +18,7 @@ OPTIONS:
   --ssid|-s       Set WiFi SSID for this SD image
   --password|-p   Set WiFI password for this SD image
   --clusterlab|-l Start Cluster-Lab on boot: true or false
+  --device|-d     Choose device to flash to (e.g. 'disk2' for /dev/disk2)
 
 For HypriotOS devices:
 
@@ -62,6 +63,7 @@ do
     --password) args="${args}-p ";;
     --bootconf) args="${args}-C ";;
     --clusterlab) args="${args}-l ";;
+    --device) args="${args}-d ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
       args="${args}${delim}${arg}${delim} ";;
@@ -70,7 +72,7 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":hc:n:s:p:C:l:" opt; do
+while getopts ":hc:n:s:p:C:l:d:" opt; do
   case $opt in
     h)  usage ;;
     c)  CONFIG_FILE=$OPTARG ;;
@@ -79,6 +81,7 @@ while getopts ":hc:n:s:p:C:l:" opt; do
     s)  WIFI_SSID=$OPTARG ;;
     p)  WIFI_PASSWORD=$OPTARG ;;
     l)  CLUSTERLAB=$OPTARG ;;
+    d)  DEVICE=$OPTARG ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -152,8 +155,12 @@ if [[ "${OSTYPE}" != "darwin"* ]]; then
 fi
 
 while true; do
-  # try to find the correct disk of the inserted SD card
-  disk=$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+  # default to device passed by user
+  disk="$DEVICE"
+  if [ "${disk}" == "" ]; then
+    # try to find the correct disk of the inserted SD card
+    disk=$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+  fi
   if [ "${disk}" == "" ]; then
     echo "No SD card found. Please insert SD card, I'll wait for it..."
     while [ "${disk}" == "" ]; do
