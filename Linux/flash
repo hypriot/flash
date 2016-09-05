@@ -232,6 +232,8 @@ fi
 echo "Waiting for device..."
 udevadm settle
 
+hdparm -z "${disk}"
+
 echo "Mounting Disk"
 boot=/tmp/mnt
 mkdir -p ${boot}
