@@ -206,7 +206,7 @@ while true; do
   fi
 
   echo "Unmounting ${disk} ..."
-  for i in $(df |grep "${disk}" | awk '{print $NF}')
+  for i in $(df |grep "${disk}" | awk '{print $1}')
   do
     sudo umount "$i"
   done
