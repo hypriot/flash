@@ -83,6 +83,15 @@ OPTIONS:
 
 ```
 
+**For non-interactive usage, you can predefine the user input in the flashing command:**
+```
+./flash hypriotos-rpi-v1.0.1.img << USERINPUT
+mmcblk0
+yes
+USERINPUT
+```
+
+
 ## How it looks like
 
 This is a complete download and flash cycle with all its steps.
