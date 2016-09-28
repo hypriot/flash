@@ -217,16 +217,16 @@ while true; do
   fi
 done
 
-echo "Flashing ${image} to ${disk} ..."
+echo "Flashing ${image} to /dev/${disk} ..."
 if [[ -x $(which pv) ]]; then
   # this sudo here is used for a login without pv's progress bar
   # hiding the password prompt
   size=$(sudo stat -c %s "${image}")
-  pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${disk}"
+  pv -s "${size}" < "${image}" | sudo dd bs=1M "of=/dev/${disk}"
 else
   echo "No 'pv' command found, so no progress available."
   echo "Press CTRL+T if you want to see the current info of dd command."
-  sudo dd bs=1M "if=${image}" "of=${disk}"
+  sudo dd bs=1M "if=${image}" "of=/dev/${disk}"
 fi
 
 echo "Waiting for device..."
