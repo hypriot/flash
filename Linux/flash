@@ -232,13 +232,13 @@ fi
 echo "Waiting for device..."
 udevadm settle
 
-hdparm -z "${disk}"
+hdparm -z "/dev/${disk}"
 
 echo "Mounting Disk"
 boot=/tmp/mnt
 mkdir -p ${boot}
 
-if beginswith /dev/mmcblk "${disk}" ;then
+if beginswith mmcblk "${disk}" ;then
   dev="${disk}p1"
 else
   dev="${disk}1"
@@ -246,7 +246,7 @@ fi
 
 echo "Mounting ${dev} to customize..."
 FS_TYPE=$(sudo blkid -o value -s TYPE "${dev}" || echo vfat)
-sudo mount -t ${FS_TYPE} "${dev}" "${boot}"
+sudo mount -t ${FS_TYPE} "/dev/${dev}" "${boot}"
 
 if [ -f "${CONFIG_FILE}" ]; then
   if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
