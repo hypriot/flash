@@ -5,27 +5,43 @@
 # Linux Version by Matt Williams - matt@matthewkwilliams.com
 # MIT License
 
+set -eo pipefail
+
 error()
 {
-    echo $1
-    exit $2
+  echo "$1"
+  exit "$2"
 }
 
 usage()
 {
-    cat << EOF
+  cat << EOF
 usage: $0 [options] name-of-rpi.img
 
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-   --help|-h      Show this message
-   --config|-c    Copy this config file to /boot/occidentalis.txt
-   --hostname|-n  Set hostname for this SD image
-   --ssid|-s      Set WiFi SSID for this SD image
-   --password|-p  Set WiFI password for this SD image
-   --device|-d       Card Device
-   --bootconf|-C  Copy this config file to /boot/config.txt
+  --help|-h      Show this message
+  --bootconf|-C  Copy this config file to /boot/config.txt
+  --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n  Set hostname for this SD image
+  --ssid|-s      Set WiFi SSID for this SD image
+  --password|-p  Set WiFI password for this SD image
+  --clusterlab|-l Start Cluster-Lab on boot: true or false
+  --device|-d    Card Device
+
+For HypriotOS devices:
+
+The config file device-init.yaml should look like
+
+hostname: black-pearl
+wifi:
+  interfaces:
+    wlan0:
+      ssid: "MyNetwork"
+      password: "secret_password"
+
+For Raspberry Pi until Hector release:
 
 The config file occidentalis.txt should look like
 
@@ -41,57 +57,67 @@ The boot config file config.txt has name/value pairs such as:
 max_usb_current=1
 
 EOF
-    exit 1
+  exit 1
 }
+
+if ! sudo sh -c 'command -v hdparm' > /dev/null; then
+  echo "No 'hdparm' command found; please install hdparm by running:"
+  echo "sudo [apt-get|yum|something-else] install hdparm"
+  exit 1
+fi
 
 # translate long options to short
 for arg
 do
-    delim=""
-    case "$arg" in
-	--help) args="${args}-h ";;
-	--verbose) args="${args}-v ";;
-	--config) args="${args}-c ";;
-	--hostname) args="${args}-n ";;
-	--ssid) args="${args}-s ";;
-	--password) args="${args}-p ";;
-	--device) args="${args}-d ";;
-	--bootconf) args="${args}-C ";;
-	# pass through anything else
-	*) [[ "${arg:0:1}" == "-" ]] || delim="\""
-            args="${args}${delim}${arg}${delim} ";;
-    esac
+  delim=""
+  case "$arg" in
+    --help) args="${args}-h ";;
+    --verbose) args="${args}-v ";;
+    --config) args="${args}-c ";;
+    --hostname) args="${args}-n ";;
+    --ssid) args="${args}-s ";;
+    --password) args="${args}-p ";;
+    --device) args="${args}-d ";;
+    --bootconf) args="${args}-C ";;
+    --clusterlab) args="${args}-l ";;
+    # pass through anything else
+    *) [[ "${arg:0:1}" == "-" ]] || delim="\""
+      args="${args}${delim}${arg}${delim} ";;
+  esac
 done
 # reset the translated args
-eval set -- $args
+eval set -- "$args"
 # now we can process with getopt
-while getopts "hc:n:s:p:d:C:" opt; do
-    case $opt in
-        h)  usage ;;
-        c)  OCCI_CONFIG=$OPTARG ;;
-        C)  BOOT_CONF=$OPTARG ;;
-        n)  SD_HOSTNAME=$OPTARG ;;
-        s)  WIFI_SSID=$OPTARG ;;
-        p)  WIFI_PASSWORD=$OPTARG ;;
-	d)  disk=$OPTARG ;;
-        \?) usage ;;
-        :)
-            echo "option -$OPTARG requires an argument"
-            usage
-            ;;
-    esac
+while getopts "hc:n:s:p:d:C:l:" opt; do
+  case $opt in
+    h)  usage ;;
+    c)  CONFIG_FILE=$OPTARG ;;
+    C)  BOOT_CONF=$OPTARG ;;
+    n)  SD_HOSTNAME=$OPTARG ;;
+    s)  WIFI_SSID=$OPTARG ;;
+    p)  WIFI_PASSWORD=$OPTARG ;;
+    l)  CLUSTERLAB=$OPTARG ;;
+    d)  disk=$OPTARG ;;
+    \?) usage ;;
+    :)
+      echo "option -$OPTARG requires an argument"
+      usage
+      ;;
+  esac
 done
 shift $((OPTIND -1))
 
 beginswith() { case $2 in $1*) true;; *) false;; esac; }
 endswith() { case $2 in *$1) true;; *) false;; esac; }
 
-image=$1
-occi=$2
+if [ $# -lt 1 ]; then
+  usage
+fi
 
 if [[ "$1" == "--help" ]]; then
   usage
 fi
+image=$1
 
 filename=$(basename "${image}")
 extension="${filename##*.}"
@@ -101,175 +127,191 @@ if [ -f "/tmp/${filename}" ]; then
   image=/tmp/${filename}
   echo "Using cached image ${image}"
 else
-  if beginswith http:// "${image}" ;then
-      which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
-      echo "Downloading ${image} ..."
-      curl -L -o /tmp/image.img.${extension} "${image}"
-      image=/tmp/image.img.${extension}
+  if beginswith http:// "${image}" || beginswith https:// "${image}"; then
+    which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
+    echo "Downloading ${image} ..."
+    curl -L -o "/tmp/image.img.${extension}" "${image}"
+    image=/tmp/image.img.${extension}
   fi
 
   if beginswith s3:// "${image}" ;then
-       which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
-       echo "Downloading ${image} ..."
-       aws s3 cp "${image}" /tmp/image.img.${extension}
-       image=/tmp/image.img.${extension}
+    which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
+    echo "Downloading ${image} ..."
+    aws s3 cp "${image}" "/tmp/image.img.${extension}"
+    image=/tmp/image.img.${extension}
   fi
 
   if [ ! -f "${image}" ]; then
-      echo "File not found."
-      exit 10
+    echo "File not found."
+    exit 10
   fi
 
-  if endswith .zip "${image}" ;then
-      which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
-      echo "Uncompressing ${image} ..."
-      unzip -o "${image}" -d /tmp
-      image=$(unzip -l "${image}" | grep -v Archive: | grep img | cut -c 30-)
-      image="/tmp/${image}"
-      echo "Use ${image}"
+  if [[ "$(file "${image}")" == *"Zip archive"* ]]; then
+    which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
+    echo "Uncompressing ${image} ..."
+    unzip -o "${image}" -d /tmp
+    image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
+    image="/tmp/${image}"
+    echo "Use ${image}"
   fi
 fi
 
 # Figure out our OS
 if [[ -z "${OSTYPE}" ]]; then
-    OSTYPE=`uname -s`
+  OSTYPE=$(uname -s)
 fi
 
 case "${OSTYPE}" in
-    darwin)
-	echo This version does not support Mac.
-  echo Download Mac version from https://github.com/hypriot/flash instead.
-	exit 11
-	;;
-    Linux)
-	;;
-    linux-gnu)
-        ;;
-    *)
-	echo Unknown OS: ${OSTYPE}
-	exit 11
-	;;
+  darwin)
+    echo This version does not support Mac.
+    echo Download Mac version from https://github.com/hypriot/flash instead.
+    exit 11
+    ;;
+  Linux)
+    ;;
+  linux-gnu*)
+    ;;
+  *)
+    echo Unknown OS: "${OSTYPE}"
+    exit 11
+    ;;
 esac
 
-if [[ -z "${disk}" ]]; then
-    # try to find the correct disk of the inserted SD card
-    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]$//'|sed  -e 's/p.*$//'  | sort | uniq`
-
-    if [[ `echo "${disk}"|awk '{print NF}'` -gt 1 ]]; then
-	PS3='Please pick your device: '
-	choices="${disk} 'None of the Above'"
-	size=`$echo "$choices" | awk '{print NF}'`
-	select choice in `echo $choices`; do
-	    if [[ $REPLY == ${size} ]]; then
-		disk=""
-		break
-	    fi
-	    if [[ -n `echo ${choices} | grep ${choice}` ]]; then
-		disk=$choice
-		break
-	    fi
-	    echo "Invalid choice. Please try again"
-	    continue
-	done
-    fi
-
-    if [ "${disk}" == "" ]; then
-	echo "No SD card found. Please insert SD card, I'll wait for it..."
-	while [ "${disk}" == "" ]; do
-	    sleep 1
-	    disk=`df | grep /media | cut -f1 -d " " | sed -e 's/[0-9]//'|sed -e 's/p.*$//'  | sort | uniq`
-	done
-    fi
-fi
-
-
-df
 while true; do
+  if [[ -x $(which lsblk) ]]; then
+    lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
+  else
+    df -h
+  fi
+
+  if [[ -z "${disk}" ]]; then
+    read -p "Please pick your device: "
+    disk="${REPLY}"
+    [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
+  fi
+  while true; do
     echo ""
-    read -p "Is ${disk} correct? " yn
+    read -rp "Is ${disk} correct? " yn
     case $yn in
-	[Yy]* ) break;;
-	[Nn]* ) exit;;
-	* ) echo "Please answer yes or no.";;
+      [Yy]* ) break;;
+      [Nn]* ) exit;;
+      * ) echo "Please answer yes or no.";;
     esac
-done
+  done
 
+  if sudo hdparm -r "${disk}" | grep -q off; then
+    writable=1
+  else
+    writable=0
+  fi
 
-# paranoia sync before umounting
-echo "Synchronizing Filesystems"
-sudo sync; sudo sync; sudo sync
-
-echo "Unmounting ${disk} ..."
-for i in `df |grep ${disk} | awk '{print $NF}'`
-do
-    sudo umount $i
+  echo "Unmounting ${disk} ..."
+  for i in $(df |grep "${disk}" | awk '{print $1}')
+  do
+    sudo umount "$i"
+  done
+  if [ "$writable" ]; then
+    break
+  else
+    echo "The SD card is write protected. Please eject, remove protection and insert again."
+  fi
 done
 
 echo "Flashing ${image} to ${disk} ..."
-pv=`which pv 2>/dev/null`
-if [ $? -eq 0 ]; then
-    # this sudo here is used for a login without pv's progress bar
-    # hiding the password prompt
-    size=`sudo stat -c %s ${image}`
-    cat ${image} | pv -s ${size} | sudo dd bs=1M of=${disk}
+if [[ -x $(which pv) ]]; then
+  # this sudo here is used for a login without pv's progress bar
+  # hiding the password prompt
+  size=$(sudo stat -c %s "${image}")
+  pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${disk}"
 else
-    echo "No `pv` command found, so no progress available."
-    echo "Press CTRL+T if you want to see the current info of dd command."
-    sudo dd bs=1M if=${image} of=${disk}
+  echo "No 'pv' command found, so no progress available."
+  echo "Press CTRL+T if you want to see the current info of dd command."
+  sudo dd bs=1M "if=${image}" "of=${disk}"
 fi
 
-echo "Flushing Buffers"
-sudo sync;sudo sync; sudo sync
+echo "Waiting for device..."
+udevadm settle
 
-boot=/tmp/mnt
+sudo hdparm -z "${disk}"
 
 echo "Mounting Disk"
+boot=/tmp/mnt
 mkdir -p ${boot}
 
-if beginswith /dev/mmcblk ${disk} ;then
-    dev="${disk}p1"
+if beginswith /dev/mmcblk "${disk}" ;then
+  dev="${disk}p1"
 else
-    dev="${disk}1"
+  dev="${disk}1"
 fi
 
-echo "Mounting ${dev} to customize"
-sudo mount ${dev} ${boot}
+echo "Mounting ${dev} to customize..."
+FS_TYPE=$(sudo blkid -o value -s TYPE "${dev}" || echo vfat)
+sudo mount -t ${FS_TYPE} "${dev}" "${boot}"
 
-if [ -f "${OCCI_CONFIG}" ]; then
-    echo "Copying ${OCCI_CONFIG} to ${boot}/occidentalis.txt ..."
-    sudo cp "${OCCI_CONFIG}"  "${boot}/occidentalis.txt"
+if [ -f "${CONFIG_FILE}" ]; then
+  if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
+    echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
+    sudo cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
+  else
+    echo "Copying ${CONFIG_FILE} to ${boot}/device-init.yaml ..."
+    sudo cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
+  fi
 fi
 
 if [[ -f "${BOOT_CONF}" ]]; then
-    echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
-    sudo cp "${BOOT_CONF}" "${boot}/config.txt"
+  echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
+  sudo cp "${BOOT_CONF}" "${boot}/config.txt"
 fi
 
-if [ ! -z ${SD_HOSTNAME} ]; then
-    echo "Set hostname=${SD_HOSTNAME}"
+if [ -f "${boot}/device-init.yaml" ]; then
+  echo "Setting device-init"
+  if [ ! -z "${SD_HOSTNAME}" ]; then
+    echo "  Set hostname=${SD_HOSTNAME}"
+    sudo sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
+  fi
+  if [ ! -z "${WIFI_SSID}" ]; then
+    echo "  Set wlan0/ssid=${WIFI_SSID}"
+    sudo sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    sudo sed -i -e "s/.*ssid:.*\$/      ssid: \"${WIFI_SSID}\"/" "${boot}/device-init.yaml"
+  fi
+  if [ ! -z "${WIFI_PASSWORD}" ]; then
+    echo "  Set wlan0/password=${WIFI_PASSWORD}"
+    sudo sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    sudo sed -i -e "s/.*password:.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
+  fi
+  if [ ! -z "${CLUSTERLAB}" ]; then
+    echo "  Set Cluster-Lab/run_on_boot=${CLUSTERLAB}"
+    sudo sed -i -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
+  fi
+fi
+
+# legacy: /boot/occidentalis.txt of old Hector release
+if [ -f "${boot}/occidentalis.txt" ]; then
+  echo "Setting Occidentalis"
+  if [ ! -z "${SD_HOSTNAME}" ]; then
+    echo "  Set hostname=${SD_HOSTNAME}"
     sudo sed -i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
-fi
-if [ ! -z ${WIFI_SSID} ]; then
-    echo "Set wifi_ssid=${WIFI_SSID}"
+  fi
+  if [ ! -z "${WIFI_SSID}" ]; then
+    echo "  Set wifi_ssid=${WIFI_SSID}"
     sudo sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
-fi
-if [ ! -z ${WIFI_PASSWORD} ]; then
-    echo "Set wifi_password=${WIFI_PASSWORD}"
+  fi
+  if [ ! -z "${WIFI_PASSWORD}" ]; then
+    echo "  Set wifi_password=${WIFI_PASSWORD}"
     sudo sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
+  fi
 fi
-
-sudo sync;sudo sync; sudo sync
 
 echo "Unmounting ${disk} ..."
 sleep 1
 
-for i in `df|grep ${disk}|awk '{print $1}'`
+for i in $(df | grep "${disk}" | awk '{print $1}')
 do
-    sudo umount $i
+  sudo umount "$i"
 done
 
 if [ $? -eq 0 ]; then
-    echo "Finished."
+  echo "Finished."
 else
-    echo "Someting went wrong."
+  echo "Something went wrong."
 fi
