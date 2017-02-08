@@ -235,7 +235,7 @@ udevadm settle
 sudo hdparm -z "${disk}"
 
 echo "Mounting Disk"
-boot=/tmp/mnt
+boot=/tmp/mnt.$$
 mkdir -p ${boot}
 
 if beginswith /dev/mmcblk "${disk}" ;then
@@ -311,6 +311,7 @@ do
 done
 
 if [ $? -eq 0 ]; then
+  rmdir ${boot}
   echo "Finished."
 else
   echo "Something went wrong."
