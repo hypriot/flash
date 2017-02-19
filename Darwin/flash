@@ -19,6 +19,8 @@ OPTIONS:
   --password|-p   Set WiFI password for this SD image
   --clusterlab|-l Start Cluster-Lab on boot: true or false
   --device|-d     Choose device to flash to (e.g. 'disk2' for /dev/disk2)
+  --userdata|-u   Copy this cloud-init file to /boot/user-data
+  --metadata|-m   Copy this cloud-init file to /boot/meta-data
 
 For HypriotOS devices:
 
@@ -64,6 +66,8 @@ do
     --bootconf) args="${args}-C ";;
     --clusterlab) args="${args}-l ";;
     --device) args="${args}-d ";;
+    --userdata) args="${args}-u ";;
+    --metadata) args="${args}-m ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
       args="${args}${delim}${arg}${delim} ";;
@@ -72,7 +76,7 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":hc:n:s:p:C:l:d:" opt; do
+while getopts ":hc:n:s:p:C:l:d:u:m:" opt; do
   case $opt in
     h)  usage ;;
     c)  CONFIG_FILE=$OPTARG ;;
@@ -82,6 +86,8 @@ while getopts ":hc:n:s:p:C:l:d:" opt; do
     p)  WIFI_PASSWORD=$OPTARG ;;
     l)  CLUSTERLAB=$OPTARG ;;
     d)  DEVICE=$OPTARG ;;
+    u)  USER_DATA=$OPTARG ;;
+    m)  META_DATA=$OPTARG ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -232,6 +238,16 @@ if [ "${boot}" ]; then
   if [[ -f "${BOOT_CONF}" ]]; then
     echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
     sudo cp "${BOOT_CONF}" "${boot}/config.txt"
+  fi
+
+  if [[ -f "${USER_DATA}" ]]; then
+    echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
+    sudo cp "${USER_DATA}" "${boot}/user-data"
+  fi
+
+  if [[ -f "${META_DATA}" ]]; then
+    echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
+    sudo cp "${META_DATA}" "${boot}/meta-data"
   fi
 
   if [ -f "${boot}/device-init.yaml" ]; then

@@ -1,6 +1,6 @@
 # flash
 
-Command line script to flash SD card images of any kind. 
+Command line script to flash SD card images of any kind.
 
 Note that for some devices (e.g. Raspberry Pi), at the end of the flashing process the tool tries to customize the SD card e.g. it configures a hostname. If this customization is not supported, just ignore the error thrown at this point.
 
@@ -80,6 +80,8 @@ OPTIONS:
    --password|-p  Set WiFI password for this SD image
    --clusterlab|-l Start Cluster-Lab on boot: true or false
    --device|-d    Card Device
+   --userdata|-u  Copy this cloud-init config file to /boot/user-data
+   --metadata|-m  Copy this cloud-init config file to /boot/meta-data
 
 ```
 
@@ -130,6 +132,11 @@ Unmount of all volumes on disk2 was successful
 Disk /dev/disk2 ejected
 🍺  Finished.
 ```
+
+## cloud-init
+
+If your SD card image has `cloud-init` preinstalled you can use the options
+`--userdata` and `--metadata` to copy both files into the FAT partition.
 
 ## device-init.yaml
 
