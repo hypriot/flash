@@ -110,6 +110,34 @@ filename=$(basename "${image}")
 extension="${filename##*.}"
 filename="${filename%.*}"
 
+if [ ! -z "${USER_DATA}" ]; then
+  if [ ! -f "${USER_DATA}" ]; then
+    echo "Cloud-init file ${USER_DATA} not found!"
+    exit 10
+  fi
+fi
+
+if [ ! -z "${META_DATA}" ]; then
+  if [ ! -f "${META_DATA}" ]; then
+    echo "Cloud-init file ${META_DATA} not found!"
+    exit 10
+  fi
+fi
+
+if [ ! -z "${BOOT_CONF}" ]; then
+  if [ ! -f "${BOOT_CONF}" ]; then
+    echo "File ${BOOT_CONF} not found!"
+    exit 10
+  fi
+fi
+
+if [ ! -z "${CONFIG_FILE}" ]; then
+  if [ ! -f "${CONFIG_FILE}" ]; then
+    echo "File ${CONFIG_FILE} not found!"
+    exit 10
+  fi
+fi
+
 if [ -f "/tmp/${filename}" ]; then
   image=/tmp/${filename}
   echo "Using cached image ${image}"
@@ -129,7 +157,7 @@ else
   fi
 
   if [ ! -f "${image}" ]; then
-    echo "File not found."
+    echo "File ${image} not found!"
     exit 10
   fi
 
@@ -240,12 +268,12 @@ if [ "${boot}" ]; then
     sudo cp "${BOOT_CONF}" "${boot}/config.txt"
   fi
 
-  if [[ -f "${USER_DATA}" ]]; then
+  if [ -f "${USER_DATA}" ]; then
     echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
     sudo cp "${USER_DATA}" "${boot}/user-data"
   fi
 
-  if [[ -f "${META_DATA}" ]]; then
+  if [ -f "${META_DATA}" ]; then
     echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
     sudo cp "${META_DATA}" "${boot}/meta-data"
   fi
