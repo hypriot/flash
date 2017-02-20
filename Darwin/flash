@@ -271,6 +271,19 @@ if [ "${boot}" ]; then
     fi
   fi
 
+  # cloud-init
+  if [ -f "${boot}/user-data" ]; then
+    if [ ! -z "${SD_HOSTNAME}" ]; then
+      echo "Set hostname=${SD_HOSTNAME}"
+      /usr/bin/sed -i "" -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/user-data"
+    fi
+
+    if [ ! -f "${boot}/meta-data" ]; then
+      echo "Creating empty meta-data"
+      touch "${boot}/meta-data"
+    fi
+  fi
+
   # legacy: /boot/occidentalis.txt of old Hector release
   if [ -f "${boot}/occidentalis.txt" ]; then
     if [ ! -z "${SD_HOSTNAME}" ]; then
