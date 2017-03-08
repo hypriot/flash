@@ -138,8 +138,8 @@ if [ ! -z "${CONFIG_FILE}" ]; then
   fi
 fi
 
-if [ -f "/tmp/${filename}" ]; then
-  image=/tmp/${filename}
+if [ -f "/tmp/${filename}.img" ]; then
+  image=/tmp/${filename}.img
   echo "Using cached image ${image}"
 else
   if beginswith http:// "${image}" || beginswith https:// "${image}"; then
