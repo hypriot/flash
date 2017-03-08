@@ -138,7 +138,10 @@ if [ ! -z "${CONFIG_FILE}" ]; then
   fi
 fi
 
-if [ -f "/tmp/${filename}.img" ]; then
+if [ -f "/tmp/${filename}" ]; then
+  image=/tmp/${filename}
+  echo "Using cached image ${image}"
+elif [ -f "/tmp/${filename}.img" ]; then
   image=/tmp/${filename}.img
   echo "Using cached image ${image}"
 else
