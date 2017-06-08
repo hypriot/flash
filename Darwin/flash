@@ -148,7 +148,7 @@ else
   if beginswith http:// "${image}" || beginswith https:// "${image}"; then
     which curl >/dev/null || (echo "Error: curl not found. Aborting" && exit 1)
     echo "Downloading ${image} ..."
-    curl -L -o "/tmp/image.img.${extension}" "${image}"
+    curl -L --fail -o "/tmp/image.img.${extension}" "${image}"
     image=/tmp/image.img.${extension}
   fi
 
