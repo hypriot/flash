@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Flash Raspberry Pi SD card images on your Mac
 # Stefan Scherer - scherer_stefan@icloud.com
 #
