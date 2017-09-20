@@ -277,6 +277,8 @@ mkdir -p ${boot}
 
 if beginswith /dev/mmcblk "${disk}" ;then
   dev="${disk}p1"
+elif beginswith /dev/loop "${disk}" ;then
+  dev="${disk}p1"
 else
   dev="${disk}1"
 fi
