@@ -62,12 +62,6 @@ EOF
   exit 1
 }
 
-if ! sudo sh -c 'command -v hdparm' > /dev/null; then
-  echo "No 'hdparm' command found; please install hdparm by running:"
-  echo "sudo [apt-get|yum|something-else] install hdparm"
-  exit 1
-fi
-
 # translate long options to short
 for arg
 do
@@ -128,6 +122,40 @@ image=$1
 filename=$(basename "${image}")
 extension="${filename##*.}"
 filename="${filename%.*}"
+
+# Figure out our OS
+if [[ -z "${OSTYPE}" ]]; then
+  OSTYPE=$(uname -s)
+fi
+
+case "${OSTYPE}" in
+  darwin*)
+    echo This version does not support Mac.
+    echo Download Mac version from https://github.com/hypriot/flash instead.
+    exit 11
+    ;;
+  Linux)
+    ;;
+  linux)
+    ;;
+  linux-gnu*)
+    ;;
+  *)
+    echo Unknown OS: "${OSTYPE}"
+    exit 11
+    ;;
+esac
+
+if endswith Microsoft "$(uname -r)"; then
+  echo This script does not work in WSL.
+  exit 11
+fi
+
+if ! sudo sh -c 'command -v hdparm' > /dev/null; then
+  echo "No 'hdparm' command found; please install hdparm by running:"
+  echo "sudo [apt-get|yum|something-else] install hdparm"
+  exit 1
+fi
 
 if [ ! -z "${USER_DATA}" ]; then
   if [ ! -f "${USER_DATA}" ]; then
@@ -192,27 +220,6 @@ else
     echo "Use ${image}"
   fi
 fi
-
-# Figure out our OS
-if [[ -z "${OSTYPE}" ]]; then
-  OSTYPE=$(uname -s)
-fi
-
-case "${OSTYPE}" in
-  darwin)
-    echo This version does not support Mac.
-    echo Download Mac version from https://github.com/hypriot/flash instead.
-    exit 11
-    ;;
-  Linux)
-    ;;
-  linux-gnu*)
-    ;;
-  *)
-    echo Unknown OS: "${OSTYPE}"
-    exit 11
-    ;;
-esac
 
 while true; do
   if [[ -x $(which lsblk) ]]; then
