@@ -290,10 +290,10 @@ sudo mount -t ${FS_TYPE} "${dev}" "${boot}"
  if [ -f "${CONFIG_FILE}" ]; then
     if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
       echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
-      cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
+      sudo cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
     else
       echo "Copying ${CONFIG_FILE} to ${boot}/device-init.yaml ..."
-      cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
+      sudo cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
     fi
   fi
 
