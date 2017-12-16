@@ -16,7 +16,7 @@ teardown() {
 }
 
 @test "device-init: flash works" {
-  run ./Linux/flash -f -d loo device-init.img
+  run ./$OS/flash -f -d loo device-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -28,7 +28,7 @@ teardown() {
 }
 
 @test "device-init: flash --hostname sets hostname" {
-  run ./Linux/flash -f -d loo --hostname myhost device-init.img
+  run ./$OS/flash -f -d loo --hostname myhost device-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -40,7 +40,7 @@ teardown() {
 }
 
 @test "device-init: flash --ssid sets WiFi" {
-  run ./Linux/flash -f -d loo --ssid myssid --password mypsk device-init.img
+  run ./$OS/flash -f -d loo --ssid myssid --password mypsk device-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -52,7 +52,7 @@ teardown() {
 }
 
 @test "device-init: flash --config replaces device-init.yaml" {
-  run ./Linux/flash -f -d loo --config test/resources/device.yml device-init.img
+  run ./$OS/flash -f -d loo --config test/resources/device.yml device-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -64,7 +64,7 @@ teardown() {
 }
 
 @test "device-init: flash --bootconf replaces config.txt" {
-  run ./Linux/flash -f -d loo --bootconf test/resources/no-uart.txt device-init.img
+  run ./$OS/flash -f -d loo --bootconf test/resources/no-uart.txt device-init.img
   assert_success
   assert_output_contains Finished.
 

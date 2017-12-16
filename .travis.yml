@@ -2,7 +2,7 @@ os: osx
 language: bash
 script:
   - node --version
+  - shellcheck
   - brew install shellcheck
-  - brew install node
   - npm install
   - node_modules/.bin/bats test/*.bats

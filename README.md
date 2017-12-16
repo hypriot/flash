@@ -1,6 +1,7 @@
 # flash
 
 [![CircleCI](https://circleci.com/gh/hypriot/flash.svg?style=svg)](https://circleci.com/gh/hypriot/flash)
+[![Build Status](https://travis-ci.org/hypriot/flash.svg?branch=master)](https://travis-ci.org/hypriot/flash)
 
 Command line script to flash SD card images of any kind.
 
@@ -249,5 +250,5 @@ the `Vagrantfile`.
 vagrant up --provider virtualbox
 vagrant ssh
 cd /vagrant
-./Linux/flash hypriotos-rpi-v1.7.1.img.zip
+./$OS/flash hypriotos-rpi-v1.7.1.img.zip
 ```

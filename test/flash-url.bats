@@ -6,7 +6,7 @@ teardown() {
 }
 
 @test "flash with url to img.zip works" {
-  run ./Linux/flash -f -d loo https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip
+  run ./$OS/flash -f -d loo https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip
   assert_success
   assert_output_contains Finished.
 
@@ -19,7 +19,7 @@ teardown() {
 
 @test "flash with url to img.xz works" {
   skip "Download is really slow and the use-case very rare"
-  run ./Linux/flash -f -d loo https://ubuntu-mate.org/raspberry-pi/ubuntu-mate-16.04.2-desktop-armhf-raspberry-pi.img.xz
+  run ./$OS/flash -f -d loo https://ubuntu-mate.org/raspberry-pi/ubuntu-mate-16.04.2-desktop-armhf-raspberry-pi.img.xz
   assert_success
   assert_output_contains Finished.
 }

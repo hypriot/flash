@@ -1,3 +1,5 @@
+export OS=$(uname -s)
+
 if [ -d ../../node_modules/bats-mock ]; then
   inc=../../node_modules
 else
