@@ -54,7 +54,7 @@ def better_usbfilter_add(vb, vendor_id, product_id, filter_name)
 end
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "boxcutter/ubuntu1404-desktop"
+  config.vm.box = "bento/ubuntu-16.04"
   config.vm.provider "virtualbox" do |v|
     v.gui = true
     v.customize ['modifyvm', :id, '--usb', 'on']

@@ -1,5 +1,7 @@
 # flash
 
+[![CircleCI](https://circleci.com/gh/hypriot/flash.svg?style=svg)](https://circleci.com/gh/hypriot/flash)
+
 Command line script to flash SD card images of any kind.
 
 Note that for some devices (e.g. Raspberry Pi), at the end of the flashing process the tool tries to customize the SD card e.g. it configures a hostname. If this customization is not supported, just ignore the error thrown at this point.
@@ -8,24 +10,24 @@ The typical workflow looks like this:
 
 [![asciicast](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w.png)](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w)
 
-1.  Run `flash http://downloads.hypriot.com/hypriot-rpi-20151115-132854.img.zip`
-2.  Insert SD card to your notebook
-3.  Press RETURN
-4.  Eject SD card and insert it to your Raspberry Pi - done!
+1. Run `flash http://downloads.hypriot.com/hypriot-rpi-20151115-132854.img.zip`
+2. Insert SD card to your notebook
+3. Press RETURN
+4. Eject SD card and insert it to your Raspberry Pi - done!
 
 This script can
 
-*   download a compressed SD card from the internet or from S3
-*   use a local SD card image, either compressed or uncompressed
-*   wait until a SD card is plugged in
-*   search for a SD card plugged into your Computer
-*   show progress bar while flashing (if `pv` is installed)
-*   copy an optional `device-init.yaml` or `occidentalis.txt` file into the boot partition of the SD
-*   copy an optional `config.txt` file into the boot partition of the SD image
-*   optional set the hostname of this SD image
-*   optional set the WiFi settings as well
-*   play a little sound after flashing
-*   unplugs the SD card
+* download a compressed SD card from the internet or from S3
+* use a local SD card image, either compressed or uncompressed
+* wait until a SD card is plugged in
+* search for a SD card plugged into your Computer
+* show progress bar while flashing (if `pv` is installed)
+* copy an optional `device-init.yaml` or `occidentalis.txt` file into the boot partition of the SD
+* copy an optional `config.txt` file into the boot partition of the SD image
+* optional set the hostname of this SD image
+* optional set the WiFi settings as well
+* play a little sound after flashing
+* unplugs the SD card
 
 At the moment only Mac OS X and Linux is supported.
 
@@ -43,11 +45,11 @@ sudo mv flash /usr/local/bin/flash
 
 The `flash` script needs optional tools
 
-*   `curl` - if you want to flash directly with an HTTP URL
-*   `aws` - if you want to flash directly from an AWS S3 bucket
-*   `pv` - to see a progress bar while flashing with the `dd` command
-*   `unzip` - to extract zip files.
-*   `hdparm` - to run the program
+* `curl` - if you want to flash directly with an HTTP URL
+* `aws` - if you want to flash directly from an AWS S3 bucket
+* `pv` - to see a progress bar while flashing with the `dd` command
+* `unzip` - to extract zip files.
+* `hdparm` - to run the program
 
 #### Mac
 
@@ -82,17 +84,16 @@ OPTIONS:
    --device|-d    Card Device
    --userdata|-u  Copy this cloud-init config file to /boot/user-data
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
-
 ```
 
 **For non-interactive usage, you can predefine the user input in the flashing command:**
+
 ```
 ./flash hypriotos-rpi-v1.0.1.img << USERINPUT
 mmcblk0
 yes
 USERINPUT
 ```
-
 
 ## How it looks like
 
@@ -246,4 +247,7 @@ the `Vagrantfile`.
 
 ```bash
 vagrant up --provider virtualbox
+vagrant ssh
+cd /vagrant
+./Linux/flash hypriotos-rpi-v1.7.1.img.zip
 ```
