@@ -1,12 +1,12 @@
 load test_helper
-#  https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip
 
 setup() {
-  if [ ! -f local.img ]; then
+  if [ ! -f cloud-init.img ]; then
+    # download SD card image with cloud-init
     curl -L -o download.img.zip https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip
     unzip download.img.zip
     # cut only 70 MByte to flash faster
-    dd if=hypriotos-rpi-v1.7.1.img of=local.img bs=1048576 count=70
+    dd if=hypriotos-rpi-v1.7.1.img of=cloud-init.img bs=1048576 count=70
   fi
 }
 
@@ -16,7 +16,7 @@ teardown() {
 }
 
 @test "cloud-init: flash works" {
-  run ./Linux/flash -f -d loo local.img
+  run ./Linux/flash -f -d loo cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -31,7 +31,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --hostname sets hostname" {
-  run ./Linux/flash -f -d loo --hostname myhost local.img
+  run ./Linux/flash -f -d loo --hostname myhost cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -46,7 +46,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --config does not replace user-data" {
-  run ./Linux/flash -f -d loo --config test/resources/good.yml local.img
+  run ./Linux/flash -f -d loo --config test/resources/good.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -61,7 +61,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --userdata replaces user-data" {
-  run ./Linux/flash -f -d loo --userdata test/resources/good.yml local.img
+  run ./Linux/flash -f -d loo --userdata test/resources/good.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -76,7 +76,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --metadata replaces meta-data" {
-  run ./Linux/flash -f -d loo --userdata test/resources/good.yml --metadata test/resources/meta.yml local.img
+  run ./Linux/flash -f -d loo --userdata test/resources/good.yml --metadata test/resources/meta.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -91,7 +91,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --bootconf replaces config.txt" {
-  run ./Linux/flash -f -d loo --bootconf test/resources/no-uart.txt local.img
+  run ./Linux/flash -f -d loo --bootconf test/resources/no-uart.txt cloud-init.img
   assert_success
   assert_output_contains Finished.
 
