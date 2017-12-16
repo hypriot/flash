@@ -1,0 +1,6 @@
+hostname: other
+wifi:
+  interfaces:
+    wlan0:
+      ssid: "SSID"
+      password: "PSK"
