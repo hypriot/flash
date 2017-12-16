@@ -3,5 +3,6 @@ language: bash
 script:
   - node --version
   - npm install
-  - node_modules/.bin/shellcheck Darwin/flash Linux/flash
+  - brew install shellcheck
+  - shellcheck Darwin/flash Linux/flash
   - node_modules/.bin/bats test/*.bats
