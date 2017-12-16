@@ -12,8 +12,8 @@ load test_helper
   assert_output_contains usage:
 }
 
-@test "flash aborts without parameters" {
+@test "flash shows usage" {
   run ./Linux/flash
-  [ "$status" -eq 10 ]
-  assert_output_contains "not found!"
+  [ "$status" -eq 1 ]
+  assert_output_contains usage:
 }
