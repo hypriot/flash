@@ -29,6 +29,7 @@ OPTIONS:
   --password|-p   Set WiFI password for this SD image
   --clusterlab|-l Start Cluster-Lab on boot: true or false
   --device|-d     Choose device to flash to (e.g. 'sdb' for /dev/sdb)
+  --force|-f      Force flash without security prompt
   --userdata|-u   Copy this cloud-init file to /boot/user-data
   --metadata|-m   Copy this cloud-init file to /boot/meta-data
 
@@ -76,6 +77,7 @@ do
     --bootconf) args="${args}-C ";;
     --clusterlab) args="${args}-l ";;
     --device) args="${args}-d ";;
+    --force) args="${args}-f ";;
     --userdata) args="${args}-u ";;
     --metadata) args="${args}-m ";;
     # pass through anything else
@@ -86,7 +88,7 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":hc:n:s:p:C:l:d:u:m:" opt; do
+while getopts ":hc:n:s:p:C:l:d:fu:m:" opt; do
   case $opt in
     h)  usage ;;
     c)  CONFIG_FILE=$OPTARG ;;
@@ -96,6 +98,7 @@ while getopts ":hc:n:s:p:C:l:d:u:m:" opt; do
     p)  WIFI_PASSWORD=$OPTARG ;;
     l)  CLUSTERLAB=$OPTARG ;;
     d)  DEVICE=$OPTARG ;;
+    f)  FORCE=$OPTARG ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
     \?) usage ;;
@@ -233,15 +236,17 @@ while true; do
     disk="${REPLY}"
     [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
   fi
-  while true; do
-    echo ""
-    read -rp "Is ${disk} correct? " yn
-    case $yn in
-      [Yy]* ) break;;
-      [Nn]* ) exit;;
-      * ) echo "Please answer yes or no.";;
-    esac
-  done
+  if [[ ! -z "${FORCE}" ]]; then
+    while true; do
+      echo ""
+      read -rp "Is ${disk} correct? " yn
+      case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+      esac
+    done
+  fi
 
   if sudo hdparm -r "${disk}" | grep -q off; then
     writable=1
@@ -292,7 +297,7 @@ fi
 
 echo "Mounting ${dev} to customize..."
 FS_TYPE=$(sudo blkid -o value -s TYPE "${dev}" || echo vfat)
-sudo mount -t ${FS_TYPE} "${dev}" "${boot}"
+sudo mount -t "${FS_TYPE}" "${dev}" "${boot}"
 
  if [ -f "${CONFIG_FILE}" ]; then
     if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
