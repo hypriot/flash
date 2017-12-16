@@ -1,0 +1,32 @@
+load test_helper
+
+@test "get_timestamp" {
+  stub date \
+      "${_DATE_ARGS} : echo 1460967598.184561556" \
+      "${_DATE_ARGS} : echo 1460967598.084561556" \
+      "${_DATE_ARGS} : echo 1460967598.004561556" \
+      "${_DATE_ARGS} : echo 1460967598.000561556" \
+      "${_DATE_ARGS} : echo 1460967598.000061556"
+
+  run get_timestamp
+  assert_success
+  assert_output 1460967598184
+
+  run get_timestamp
+  assert_success
+  assert_output 1460967598084
+
+  run get_timestamp
+  assert_success
+  assert_output 1460967598004
+
+  run get_timestamp
+  assert_success
+  assert_output 1460967598000
+
+  run get_timestamp
+  assert_success
+  assert_output 1460967598000
+
+  unstub date
+}

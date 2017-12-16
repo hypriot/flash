@@ -1,0 +1,17 @@
+{
+  "name": "flash-test",
+  "version": "0.0.1",
+  "description": "tests for flash",
+  "main": "index.js",
+  "scripts": {
+    "test":
+      "if [ -e ../node_modules/.bin/bats ]; then ../node_modules/.bin/bats test/*.bats; else node_modules/.bin/bats test/*.bats; fi"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "bats": "^0.4.2",
+    "bats-assert": "^1.1.1",
+    "bats-mock": "^1.0.1"
+  }
+}
