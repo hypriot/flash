@@ -1,0 +1,16 @@
+version: 2
+
+jobs:
+  build:
+    machine: true
+
+    steps:
+      - checkout
+
+      - run:
+          name: Run shellcheck
+          command: make shellcheck
+
+      - run:
+          name: Run BATS tests
+          command: make test
