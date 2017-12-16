@@ -21,9 +21,4 @@ teardown() {
   run ./Linux/flash -f -d loo https://ubuntu-mate.org/raspberry-pi/ubuntu-mate-16.04.2-desktop-armhf-raspberry-pi.img.xz
   assert_success
   assert_output_contains Finished.
-
-  mount_sd_boot loo /tmp/boot
-  run cat /tmp/boot/cmdline.txt
-  assert_success
-  assert_output_contains "console=serial0,115200"
 }
