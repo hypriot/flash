@@ -98,7 +98,7 @@ while getopts ":hc:n:s:p:C:l:d:fu:m:" opt; do
     p)  WIFI_PASSWORD=$OPTARG ;;
     l)  CLUSTERLAB=$OPTARG ;;
     d)  DEVICE=$OPTARG ;;
-    f)  FORCE=$OPTARG ;;
+    f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
     \?) usage ;;
@@ -237,7 +237,7 @@ while true; do
     disk="${REPLY}"
     [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
   fi
-  if [[ ! -z "${FORCE}" ]]; then
+  if [[ -z "${FORCE}" ]]; then
     while true; do
       echo ""
       read -rp "Is ${disk} correct? " yn
