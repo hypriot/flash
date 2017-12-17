@@ -28,12 +28,12 @@ OPTIONS:
   --ssid|-s       Set WiFi SSID for this SD image
   --password|-p   Set WiFI password for this SD image
   --clusterlab|-l Start Cluster-Lab on boot: true or false
-  --device|-d     Choose device to flash to (e.g. 'sdb' for /dev/sdb)
-  --force|-f      Force flash without security prompt
+  --device|-d     Card device to flash to (e.g. /dev/sdb)
+  --force|-f      Force flash without security prompt (for automation)
   --userdata|-u   Copy this cloud-init file to /boot/user-data
   --metadata|-m   Copy this cloud-init file to /boot/meta-data
 
-For HypriotOS devices:
+For HypriotOS < v1.7.0:
 
 The config file device-init.yaml should look like
 
@@ -44,21 +44,10 @@ wifi:
       ssid: "MyNetwork"
       password: "secret_password"
 
-For Raspberry Pi until Hector release:
+For HypriotOS v1.7.0 and higher:
 
-The config file occidentalis.txt should look like
-
-# hostname for your Hypriot Raspberry Pi:
-hostname=hypriot-pi
-
-# basic wireless networking options:
-wifi_ssid=SSID
-wifi_password=12345
-
-The boot config file config.txt has name/value pairs such as:
-
-max_usb_current=1
-
+The config file user-data config file is the cloud-init configuration.
+See http://cloudinit.readthedocs.io/en/0.7.9/ for more details.
 EOF
   exit 1
 }

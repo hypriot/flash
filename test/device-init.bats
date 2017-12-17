@@ -8,19 +8,21 @@ setup() {
     # cut only 70 MByte to flash faster
     dd if=hypriotos-rpi-v1.6.0.img of=device-init.img bs=1048576 count=70
   fi
+  stub_diskutil
 }
 
 teardown() {
   umount_sd_boot /tmp/boot
-  rm -f loo
+  rm -f $img
+  unstub_diskutil
 }
 
 @test "device-init: flash works" {
-  run ./$OS/flash -f -d loo device-init.img
+  run ./$OS/flash -f -d $img device-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/device-init.yaml
   assert_output_contains "hostname: black-pearl"
   assert_output_contains "#       ssid:"
@@ -28,11 +30,11 @@ teardown() {
 }
 
 @test "device-init: flash --hostname sets hostname" {
-  run ./$OS/flash -f -d loo --hostname myhost device-init.img
+  run ./$OS/flash -f -d $img --hostname myhost device-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/device-init.yaml
   assert_output_contains "hostname: myhost"
   assert_output_contains "#       ssid:"
@@ -40,11 +42,11 @@ teardown() {
 }
 
 @test "device-init: flash --ssid sets WiFi" {
-  run ./$OS/flash -f -d loo --ssid myssid --password mypsk device-init.img
+  run ./$OS/flash -f -d $img --ssid myssid --password mypsk device-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/device-init.yaml
   assert_output_contains "hostname: black-pearl"
   assert_output_contains '      ssid: "myssid"'
@@ -52,11 +54,11 @@ teardown() {
 }
 
 @test "device-init: flash --config replaces device-init.yaml" {
-  run ./$OS/flash -f -d loo --config test/resources/device.yml device-init.img
+  run ./$OS/flash -f -d $img --config test/resources/device.yml device-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/device-init.yaml
   assert_output_contains "hostname: other"
   assert_output_contains 'ssid: "SSID"'
@@ -64,11 +66,11 @@ teardown() {
 }
 
 @test "device-init: flash --bootconf replaces config.txt" {
-  run ./$OS/flash -f -d loo --bootconf test/resources/no-uart.txt device-init.img
+  run ./$OS/flash -f -d $img --bootconf test/resources/no-uart.txt device-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/device-init.yaml
   assert_output_contains "hostname: black-pearl"
   assert_output_contains "#       ssid:"

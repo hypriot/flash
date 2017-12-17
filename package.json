@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test":
-      "if [ -e ../node_modules/.bin/bats ]; then ../node_modules/.bin/bats test/*.bats; else node_modules/.bin/bats test/*.bats; fi"
+      "if [ -e ../node_modules/.bin/bats ]; then ../node_modules/.bin/bats --tap test; else node_modules/.bin/bats --tap test; fi"
   },
   "author": "",
   "license": "MIT",

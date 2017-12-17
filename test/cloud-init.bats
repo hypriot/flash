@@ -8,19 +8,22 @@ setup() {
     # cut only 70 MByte to flash faster
     dd if=hypriotos-rpi-v1.7.1.img of=cloud-init.img bs=1048576 count=70
   fi
+  stub_diskutil
 }
 
 teardown() {
   umount_sd_boot /tmp/boot
-  rm -f loo
+  rm -f $img
+  unstub_diskutil
 }
 
 @test "cloud-init: flash works" {
-  run ./$OS/flash -f -d loo cloud-init.img
+  run ./$OS/flash -f -d $img cloud-init.img
   assert_success
+
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
   assert_output_contains "hostname: black-pearl"
   assert_output_contains "name: pirate"
@@ -31,11 +34,11 @@ teardown() {
 }
 
 @test "cloud-init: flash --hostname sets hostname" {
-  run ./$OS/flash -f -d loo --hostname myhost cloud-init.img
+  run ./$OS/flash -f -d $img --hostname myhost cloud-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
   assert_output_contains "hostname: myhost"
   assert_output_contains "name: pirate"
@@ -46,11 +49,11 @@ teardown() {
 }
 
 @test "cloud-init: flash --config does not replace user-data" {
-  run ./$OS/flash -f -d loo --config test/resources/good.yml cloud-init.img
+  run ./$OS/flash -f -d $img --config test/resources/good.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
   assert_output_contains "hostname: black-pearl"
   assert_output_contains "name: pirate"
@@ -61,11 +64,11 @@ teardown() {
 }
 
 @test "cloud-init: flash --userdata replaces user-data" {
-  run ./$OS/flash -f -d loo --userdata test/resources/good.yml cloud-init.img
+  run ./$OS/flash -f -d $img --userdata test/resources/good.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
   assert_output_contains "hostname: good"
   assert_output_contains "name: other"
@@ -76,11 +79,11 @@ teardown() {
 }
 
 @test "cloud-init: flash --metadata replaces meta-data" {
-  run ./$OS/flash -f -d loo --userdata test/resources/good.yml --metadata test/resources/meta.yml cloud-init.img
+  run ./$OS/flash -f -d $img --userdata test/resources/good.yml --metadata test/resources/meta.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
   assert_output_contains "hostname: good"
   assert_output_contains "name: other"
@@ -91,11 +94,11 @@ teardown() {
 }
 
 @test "cloud-init: flash --bootconf replaces config.txt" {
-  run ./$OS/flash -f -d loo --bootconf test/resources/no-uart.txt cloud-init.img
+  run ./$OS/flash -f -d $img --bootconf test/resources/no-uart.txt cloud-init.img
   assert_success
   assert_output_contains Finished.
 
-  mount_sd_boot loo /tmp/boot
+  mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
   assert_output_contains "hostname: black-pearl"
   assert_output_contains "name: pirate"
