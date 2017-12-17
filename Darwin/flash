@@ -216,6 +216,9 @@ while true; do
     done
   fi
 
+  if [[ "$disk" == *.dmg ]]; then
+    break
+  fi
   echo "Unmounting ${disk} ..."
   diskutil unmountDisk "${disk}s1"
   diskutil unmountDisk "${disk}"
@@ -241,7 +244,10 @@ else
   sudo /bin/dd bs=1m if=${image} "of=${rawdisk}"
 fi
 
-if [[ "$rawdisk" == *.img ]]; then
+if [[ "$rawdisk" == *.dmg ]]; then
+  mv "$rawdisk" "${rawdisk}.readonly.dmg"
+  hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
+  rm -f "${rawdisk}.readonly.dmg"
   disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
   echo mounted FAT partition to "$disk"
   if [ "$disk" == "" ]; then
