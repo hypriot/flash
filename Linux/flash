@@ -98,7 +98,7 @@ while getopts ":hc:n:s:p:C:l:d:fu:m:" opt; do
     p)  WIFI_PASSWORD=$OPTARG ;;
     l)  CLUSTERLAB=$OPTARG ;;
     d)  DEVICE=$OPTARG ;;
-    f)  FORCE=$OPTARG ;;
+    f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
     \?) usage ;;
@@ -232,11 +232,12 @@ while true; do
   fi
   disk="$DEVICE"
   if [[ -z "${disk}" ]]; then
+    # shellcheck disable=SC2162
     read -p "Please pick your device: "
     disk="${REPLY}"
     [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
   fi
-  if [[ ! -z "${FORCE}" ]]; then
+  if [[ -z "${FORCE}" ]]; then
     while true; do
       echo ""
       read -rp "Is ${disk} correct? " yn
@@ -384,6 +385,7 @@ do
   sudo umount "$i"
 done
 
+# shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
   rmdir ${boot}
   echo "Finished."

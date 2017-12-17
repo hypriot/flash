@@ -88,7 +88,7 @@ while getopts ":hc:n:s:p:C:l:d:fu:m:" opt; do
     p)  WIFI_PASSWORD=$OPTARG ;;
     l)  CLUSTERLAB=$OPTARG ;;
     d)  DEVICE=$OPTARG ;;
-    d)  FORCE=$OPTARG ;;
+    f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
     \?) usage ;;
@@ -104,6 +104,10 @@ beginswith() { case $2 in $1*) true;; *) false;; esac; }
 endswith() { case $2 in *$1) true;; *) false;; esac; }
 
 image=$1
+
+if [ $# -lt 1 ]; then
+  usage
+fi
 
 if [ "$1" == "--help" ]; then
   usage
@@ -211,7 +215,7 @@ while true; do
 
   df -h
 
-  if [ "${FORCE}" != "" ]; then
+  if [ "${FORCE}" == "" ]; then
     while true; do
       echo ""
       read -rp "Is /dev/${disk} correct? " yn
@@ -256,7 +260,7 @@ if [ "${boot}" == "" ]; then
     if [ "${boot}" != "" ]; then
       break
     fi
-    let COUNTER=COUNTER+1
+    (( COUNTER=COUNTER+1 ))
   done
 fi
 
@@ -343,6 +347,7 @@ sleep 1
 diskutil unmountDisk "/dev/${disk}s1"
 diskutil unmountDisk "/dev/${disk}s2"
 diskutil eject "/dev/${disk}"
+# shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
   afplay /System/Library/Sounds/Bottle.aiff
   echo "  Finished."

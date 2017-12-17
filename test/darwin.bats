@@ -11,3 +11,9 @@ load test_helper
   [ "$status" -eq 1 ]
   assert_output_contains usage:
 }
+
+@test "test sudo command" {
+  run sudo ls
+  [ "$status" -eq 0 ]
+  assert_output_contains README.md
+}
