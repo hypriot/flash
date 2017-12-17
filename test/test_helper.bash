@@ -9,8 +9,8 @@ load $inc/bats-mock/stub
 load $inc/bats-assert/all
 
 if [ "${OS}" == "Darwin" ]; then
-  # macOS needs extension .img for temp image
-  img=loo.img
+  # macOS needs extension .dmg for temp image
+  img=loo.dmg
 else
   # Linux uses a substring of loop device for temp image
   img=loo
