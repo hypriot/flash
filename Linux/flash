@@ -232,6 +232,7 @@ while true; do
   fi
   disk="$DEVICE"
   if [[ -z "${disk}" ]]; then
+    # shellcheck disable=SC2162
     read -p "Please pick your device: "
     disk="${REPLY}"
     [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
@@ -384,6 +385,7 @@ do
   sudo umount "$i"
 done
 
+# shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
   rmdir ${boot}
   echo "Finished."

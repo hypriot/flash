@@ -347,6 +347,7 @@ sleep 1
 diskutil unmountDisk "/dev/${disk}s1"
 diskutil unmountDisk "/dev/${disk}s2"
 diskutil eject "/dev/${disk}"
+# shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
   afplay /System/Library/Sounds/Bottle.aiff
   echo "  Finished."
