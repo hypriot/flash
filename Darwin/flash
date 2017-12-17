@@ -229,7 +229,7 @@ while true; do
 done
 
 echo "Flashing ${image} to ${disk} ..."
-rawdisk=$(echo "$disk" | sed 's,^/dev/,/dev/r,')
+rawdisk=${disk//\/dev\//\/dev\/r}
 if [[ -x $(which pv) ]]; then
   # this sudo here is used for a login without pv's progress bar
   # hiding the password prompt
@@ -243,14 +243,14 @@ fi
 
 if [[ "$rawdisk" == *.img ]]; then
   disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
-  echo mounted FAT partition to $disk
+  echo mounted FAT partition to "$disk"
   if [ "$disk" == "" ]; then
-    echo Failed attaching $rawdisk
+    echo Failed attaching "$rawdisk"
     exit 5
   fi
 fi
 
-sboot=$(df | grep --color=never "${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+boot=$(df | grep --color=never "${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
 if [ "${boot}" == "" ]; then
   COUNTER=0
   while [ $COUNTER -lt 5 ]; do
@@ -343,7 +343,7 @@ fi
 
 echo "Unmounting and ejecting ${disk} ..."
 sleep 1
-hdiutil detach ${disk}
+hdiutil detach "${disk}"
 
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
