@@ -28,7 +28,7 @@ stub_diskutil() {
 
 unstub_diskutil() {
   if [ "${OS}" == "Darwin" ]; then
-    unstub diskutil
+    unstub diskutil || true
   fi
 }
 
