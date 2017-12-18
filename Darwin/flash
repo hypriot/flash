@@ -18,12 +18,12 @@ OPTIONS:
   --ssid|-s       Set WiFi SSID for this SD image
   --password|-p   Set WiFI password for this SD image
   --clusterlab|-l Start Cluster-Lab on boot: true or false
-  --device|-d     Choose device to flash to (e.g. 'disk2' for /dev/disk2)
-  --force|-f      Force flash without security prompt
+  --device|-d     Card device to flash to (e.g. /dev/disk2)
+  --force|-f      Force flash without security prompt (for automation)
   --userdata|-u   Copy this cloud-init file to /boot/user-data
   --metadata|-m   Copy this cloud-init file to /boot/meta-data
 
-For HypriotOS devices:
+For HypriotOS < v1.7.0:
 
 The config file device-init.yaml should look like
 
@@ -34,21 +34,10 @@ wifi:
       ssid: "MyNetwork"
       password: "secret_password"
 
-For Raspberry Pi until Hector release:
+For HypriotOS v1.7.0 and higher:
 
-The config file occidentalis.txt should look like
-
-# hostname for your Hypriot Raspberry Pi:
-hostname=hypriot-pi
-
-# basic wireless networking options:
-wifi_ssid=SSID
-wifi_password=12345
-
-The boot config file config.txt has name/value pairs such as:
-
-max_usb_current=1
-
+The config file user-data config file is the cloud-init configuration.
+See http://cloudinit.readthedocs.io/en/0.7.9/ for more details.
 EOF
   exit 1
 }
@@ -203,13 +192,13 @@ while true; do
   disk="$DEVICE"
   if [ "${disk}" == "" ]; then
     # try to find the correct disk of the inserted SD card
-    disk=$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+    disk=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
   fi
-  if [ "${disk}" == "" ]; then
+  if [ "${disk}" == "" ] || [ "${disk}" == "/dev/" ]; then
     echo "No SD card found. Please insert SD card, I'll wait for it..."
-    while [ "${disk}" == "" ]; do
+    while [ "${disk}" == "" ] || [ "${disk}" == "/dev/" ]; do
       sleep 1
-      disk=$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+      disk=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
     done
   fi
 
@@ -218,7 +207,7 @@ while true; do
   if [ "${FORCE}" == "" ]; then
     while true; do
       echo ""
-      read -rp "Is /dev/${disk} correct? " yn
+      read -rp "Is ${disk} correct? " yn
       case $yn in
         [Yy]* ) break;;
         [Nn]* ) exit;;
@@ -227,10 +216,13 @@ while true; do
     done
   fi
 
+  if [[ "$disk" == *.dmg ]]; then
+    break
+  fi
   echo "Unmounting ${disk} ..."
-  diskutil unmountDisk "/dev/${disk}s1"
-  diskutil unmountDisk "/dev/${disk}"
-  readonlymedia=$(diskutil info "/dev/${disk}" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
+  diskutil unmountDisk "${disk}s1"
+  diskutil unmountDisk "${disk}"
+  readonlymedia=$(diskutil info "${disk}" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
   if [ "$readonlymedia" == "No" ]; then
     break
   else
@@ -240,23 +232,36 @@ while true; do
 done
 
 echo "Flashing ${image} to ${disk} ..."
+rawdisk=${disk//\/dev\//\/dev\/r}
 if [[ -x $(which pv) ]]; then
   # this sudo here is used for a login without pv's progress bar
   # hiding the password prompt
   size=$(sudo /usr/bin/stat -f %z ${image})
-  pv -s "${size}" < ${image} | sudo /bin/dd bs=1m "of=/dev/r${disk}"
+  pv -s "${size}" < ${image} | sudo /bin/dd bs=1m "of=${rawdisk}"
 else
   echo "No 'pv' command found, so no progress available."
   echo "Press CTRL+T if you want to see the current info of dd command."
-  sudo /bin/dd bs=1m if=${image} "of=/dev/r${disk}"
+  sudo /bin/dd bs=1m if=${image} "of=${rawdisk}"
 fi
 
-boot=$(df | grep --color=never "/dev/${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+if [[ "$rawdisk" == *.dmg ]]; then
+  mv "$rawdisk" "${rawdisk}.readonly.dmg"
+  hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
+  rm -f "${rawdisk}.readonly.dmg"
+  disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
+  echo mounted FAT partition to "$disk"
+  if [ "$disk" == "" ]; then
+    echo Failed attaching "$rawdisk"
+    exit 5
+  fi
+fi
+
+boot=$(df | grep --color=never "${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
 if [ "${boot}" == "" ]; then
   COUNTER=0
   while [ $COUNTER -lt 5 ]; do
     sleep 1
-    boot=$(df | grep --color=never "/dev/${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+    boot=$(df | grep --color=never "${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
     if [ "${boot}" != "" ]; then
       break
     fi
@@ -344,9 +349,8 @@ fi
 
 echo "Unmounting and ejecting ${disk} ..."
 sleep 1
-diskutil unmountDisk "/dev/${disk}s1"
-diskutil unmountDisk "/dev/${disk}s2"
-diskutil eject "/dev/${disk}"
+hdiutil detach "${disk}"
+
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
   afplay /System/Library/Sounds/Bottle.aiff

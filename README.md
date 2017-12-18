@@ -82,7 +82,8 @@ OPTIONS:
    --ssid|-s      Set WiFi SSID for this SD image
    --password|-p  Set WiFI password for this SD image
    --clusterlab|-l Start Cluster-Lab on boot: true or false
-   --device|-d    Card Device
+   --device|-d    Card device to flash to (e.g. /dev/disk2)
+   --force|-f     Force flash without security prompt (for automation)
    --userdata|-u  Copy this cloud-init config file to /boot/user-data
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
 ```
@@ -90,10 +91,7 @@ OPTIONS:
 **For non-interactive usage, you can predefine the user input in the flashing command:**
 
 ```
-./flash hypriotos-rpi-v1.0.1.img << USERINPUT
-mmcblk0
-yes
-USERINPUT
+./flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.0.1.img
 ```
 
 ## How it looks like
@@ -135,16 +133,43 @@ Disk /dev/disk2 ejected
 🍺  Finished.
 ```
 
-## cloud-init
+## cloud-init `user-data` and `meta-data`
 
-If your SD card image has `cloud-init` preinstalled you can use the options
-`--userdata` and `--metadata` to copy both files into the FAT partition.
+If your SD card image has `cloud-init` preinstalled (HypriotOS v1.7.0 or higher)
+you can use the options `--userdata` and `--metadata` to copy both files into
+the FAT partition.
+
+This is an example how to create our default user with a password.
+
+```yaml
+#cloud-config
+# vim: syntax=yaml
+#
+hostname: black-pearl
+manage_etc_hosts: true
+
+users:
+  - name: pirate
+    gecos: "Hypriot Pirate"
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: users,docker,video
+    plain_text_passwd: hypriot
+    lock_passwd: false
+    ssh_pwauth: true
+    chpasswd: { expire: false }
+
+package_upgrade: false
+```
+
+Please have a look at [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
+how to do more things like using SSH keys, running additional commands etc.
 
 ## device-init.yaml
 
-The option `--config` could be used to copy a `device-init.yaml` into the SD
-image before it is unplugged. This YAML file can be read by newer HyperiotOS
-SD images.
+For HypriotOS older than v1.7.0 the option `--config` could be used to copy a
+`device-init.yaml` into the SD image before it is unplugged. This YAML file can
+be read by newer HyperiotOS SD images.
 
 The config file device-init.yaml should look like
 
