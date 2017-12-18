@@ -6,4 +6,4 @@ script:
   - brew install shellcheck
   - brew install pv
   - shellcheck Darwin/flash Linux/flash
-  - node_modules/.bin/bats --tap test
+  - npm test
