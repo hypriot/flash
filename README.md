@@ -259,10 +259,29 @@ ssh pi@mypi.local
 Pull requests and other feedback is always welcome. The `flash` tool should fit
 our all needs and environments.
 
+To develop the flash scripts you need either a Linux or macOS machine to test locally. On a Mac you can use Docker to run the Linux tests in a container and if you dare you can run the macOS tests directly. On a Linux machine you can not test the macOS variant directly. But in every case you can send a pull request and push code to GitHub and the CI pipeline with CircleCI (Linux) and TravisCI (macOS) will test your code for both platforms.
+
+You need Docker installed to run the following tests.
+
+### Shellcheck
+
+The flash script are checked with the shellcheck linting tool.
+
+```
+make shellcheck
+```
+
+### Integration tests
+
+The flash script also have BATS integration tests. You don't have to install everything on your development machine. It should be enough to test the Linux variant in a Docker container and then run the macOS tests with TravisCI.
+
+```
+make test
+```
+
 ### Test Linux from Mac
 
-As I only have a MacBookPro where I started to develop the `flash` tool it is
-hard for me to test Linux issues. But with some help I found a way to spin up a
+This is for manual tests on my Mac to investigate Linux problems from time to time. With some help I found a way to spin up a
 VirtualBox Vagrant box with Ubuntu that maps the internal Apple SD card reader
 into the VM. Thanks to [Flexshot](https://github.com/Flexshot) for the helper
 functions I found in [NextThingCo/CHIP-SDK#15](https://github.com/NextThingCo/CHIP-SDK/pull/15).
@@ -275,5 +294,5 @@ the `Vagrantfile`.
 vagrant up --provider virtualbox
 vagrant ssh
 cd /vagrant
-./$OS/flash hypriotos-rpi-v1.7.1.img.zip
+./Linux/flash hypriotos-rpi-v1.7.1.img.zip
 ```
