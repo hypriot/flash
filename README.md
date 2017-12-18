@@ -133,7 +133,7 @@ Disk /dev/disk2 ejected
 🍺  Finished.
 ```
 
-## cloud-init `user-data` and `meta-data`
+## cloud-init
 
 If your SD card image has `cloud-init` preinstalled (HypriotOS v1.7.0 or higher)
 you can use the options `--userdata` and `--metadata` to copy both files into
@@ -162,7 +162,7 @@ users:
 package_upgrade: false
 ```
 
-Please have a look at [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
+Please have a look at our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
 how to do more things like using SSH keys, running additional commands etc.
 
 ## device-init.yaml
