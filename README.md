@@ -11,7 +11,7 @@ The typical workflow looks like this:
 
 [![asciicast](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w.png)](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w)
 
-1. Run `flash http://downloads.hypriot.com/hypriot-rpi-20151115-132854.img.zip`
+1. Run `flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip`
 2. Insert SD card to your notebook
 3. Press RETURN
 4. Eject SD card and insert it to your Raspberry Pi - done!
@@ -23,8 +23,9 @@ This script can
 * wait until a SD card is plugged in
 * search for a SD card plugged into your Computer
 * show progress bar while flashing (if `pv` is installed)
-* copy an optional `device-init.yaml` or `occidentalis.txt` file into the boot partition of the SD
-* copy an optional `config.txt` file into the boot partition of the SD image
+* copy an optional cloud-init `user-data` and `meta-data` file into the boot partition of the SD image
+* copy an optional `config.txt` file into the boot partition of the SD image (eg. to enable onboard WiFi)
+* copy an optional `device-init.yaml` or `occidentalis.txt` file into the boot partition of the SD image (for older HypriotOS versions)
 * optional set the hostname of this SD image
 * optional set the WiFi settings as well
 * play a little sound after flashing
@@ -88,56 +89,13 @@ OPTIONS:
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
 ```
 
-**For non-interactive usage, you can predefine the user input in the flashing command:**
+## Configuration
 
-```
-./flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.0.1.img
-```
+The strength of the flash tool is that it can insert some configuration files that gives you the best first boot experience to customize the hostname, WiFi and even user logins and SSH keys automatically.
 
-## How it looks like
+### cloud-init
 
-This is a complete download and flash cycle with all its steps.
-
-```shell
-$ flash http://downloads.hypriot.com/hypriot-rpi-20151004-132414.img.zip
-Downloading http://downloads.hypriot.com/hypriot-rpi-20151004-132414.img.zip ...
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100  346M  100  346M    0     0  5643k      0  0:01:02  0:01:02 --:--:-- 5366k
-Uncompressing /tmp/image.img.zip ...
-Archive:  /tmp/image.img.zip
-  inflating: /tmp/hypriot-rpi-20151004-132414.img
-Use /tmp/hypriot-rpi-20151004-132414.img
-No SD card found. Please insert SD card, I'll wait for it...
-Filesystem    512-blocks      Used Available Capacity   iused    ifree %iused  Mounted on
-/dev/disk1     974700800 863201064 110987736    89% 107964131 13873467   89%   /
-devfs                669       669         0   100%      1159        0  100%   /dev
-map -hosts             0         0         0   100%         0        0  100%   /net
-map auto_home          0         0         0   100%         0        0  100%   /home
-/dev/disk2s1      114576     29456     85120    26%       512        0  100%   /Volumes/boot
-
-Is /dev/disk2s1 correct? y
-Unmounting disk2 ...
-Unmount of all volumes on disk2 was successful
-Unmount of all volumes on disk2 was successful
-Flashing /tmp/hypriot-rpi-20151004-132414.img to disk2 ...
-Password:
- 976MiB 0:01:12 [13.4MiB/s] [=============================================>] 100%
-0+15625 records in
-0+15625 records out
-1024000000 bytes transferred in 72.779589 secs (14069879 bytes/sec)
-Unmounting and ejecting disk2 ...
-Unmount of all volumes on disk2 was successful
-Unmount of all volumes on disk2 was successful
-Disk /dev/disk2 ejected
-🍺  Finished.
-```
-
-## cloud-init
-
-If your SD card image has `cloud-init` preinstalled (HypriotOS v1.7.0 or higher)
-you can use the options `--userdata` and `--metadata` to copy both files into
-the FAT partition.
+With HypriotOS v1.7.0 and higher the options `--userdata` and `--metadata` can be used to copy both cloud-init config files into the FAT partition.
 
 This is an example how to create our default user with a password.
 
@@ -162,12 +120,28 @@ users:
 package_upgrade: false
 ```
 
-Please have a look at our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
+Please have a look at the [`samples`](samples/) folder, our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
 how to do more things like using SSH keys, running additional commands etc.
 
-## device-init.yaml
+### config.txt
 
-For HypriotOS older than v1.7.0 the option `--config` could be used to copy a
+The option `--bootconf` can be used to copy a `config.txt` into the SD image
+before it is unplugged.
+
+With this option it is possible to change some memory, camera, video settings
+etc. See the [config.txt documentation](https://www.raspberrypi.org/documentation/configuration/config-txt.md)
+at raspberrypi.org for more details.
+
+The boot config file config.txt has name/value pairs such as:
+
+```bash
+max_usb_current=1
+hdmi_force_hotplug=1
+```
+
+### device-init.yaml
+
+For HypriotOS older than v1.7.0 the option `--config` can be used to copy a
 `device-init.yaml` into the SD image before it is unplugged. This YAML file can
 be read by newer HyperiotOS SD images.
 
@@ -184,62 +158,15 @@ wifi:
 
 If you don't want to set any wifi settings, comment out or remove the wlan0, ssid and password.
 
-## occidentalis.txt
-
-**WARNING** The following option will change in the near future as we are
-switching from our RPi-only SD card image to new debian based SD images for
-different devices. To support all other devices there will be a different file
-to do similar tasks and we have more functions in mind.
-
-The option `--config` could be used to copy a `occidentalis.txt` into the SD
-image before it is unplugged.
-
-Many kudos to [Adafruit's occi](https://github.com/adafruit/Adafruit-Occi)
-package that handles updating hostname and WiFi settings while booting the
-Raspberry Pi.
-
-The config file `occidentalis.txt` should look like
-
-```bash
-# hostname for your Hypriot Raspberry Pi:
-hostname=hypriot-pi
-
-# basic wireless networking options:
-wifi_ssid=SSID
-wifi_password=12345
-```
-
-## config.txt
-
-The option `--bootconf` can be used to copy a `config.txt` into the SD image
-before it is unplugged.
-
-With this option it is possible to change some memory, camera, video settings
-etc. See the [config.txt documentation](https://www.raspberrypi.org/documentation/configuration/config-txt.md)
-at raspberrypi.org for more details.
-
-The boot config file config.txt has name/value pairs such as:
-
-```bash
-max_usb_current=1
-hdmi_force_hotplug=1
-```
-
 ## Use cases
 
 ### Flash a compressed SD image from the internet
 
 ```bash
-flash http://downloads.hypriot.com/hypriot-rpi-20151004-132414.img.zip
+flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip
 ```
 
-### Flash a compressed SD image from S3 bucket
-
-```bash
-flash s3://bucket/path/to/hypriot-rpi-20150611-195657.img.zip
-```
-
-### Flash with a given hostname
+### Flash and change the hostname
 
 This works only for SD card images that already have `occi` installed.
 
@@ -254,6 +181,22 @@ Pi. After a while the Pi can be found via Bonjour/avahi and you can log in with
 ssh pi@mypi.local
 ```
 
+### Onboard WiFi
+
+The options `--userdata` and `--bootconf` must be used to disable UART and enable onboard WiFi for Raspberry Pi 3 and Pi 0. For external WiFi sticks you do not need to specify the `-bootconf` option.
+
+```
+flash --userdata sample/wlan-user-data.yaml --bootconf sample/no-uart-config.txt hypriotos-rpi-v1.7.1.img
+```
+
+### Automating flash
+
+For non-interactive usage, you can predefine the user input in the flash command with the `-d` and `-f` options:
+
+```
+flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.7.1.img
+```
+
 ## Development
 
 Pull requests and other feedback is always welcome. The `flash` tool should fit
@@ -261,17 +204,32 @@ our all needs and environments.
 
 To develop the flash scripts you need either a Linux or macOS machine to test locally. On a Mac you can use Docker to run the Linux tests in a container and if you dare you can run the macOS tests directly. On a Linux machine you can not test the macOS variant directly. But in every case you can send a pull request and push code to GitHub and the CI pipeline with CircleCI (Linux) and TravisCI (macOS) will test your code for both platforms.
 
-You need Docker installed to run the following tests.
+### Local development
 
-### Shellcheck
+The flash script are checked with the [`shellcheck`](https://www.shellcheck.net) static analysis tool.
 
-The flash script are checked with the shellcheck linting tool.
+The integration tests can be run locally on macOS or Linux. We use BATS which is installed with NPM package. So you would need Node.js to setup a local development environment.
+
+```
+npm install
+npm test
+```
+
+### Isolated tests with Docker
+
+If you do not want to install all these development tools (shellcheck, bats, node), you can use Docker instead.
+
+All you need is Docker and `make` installed to run the following tests.
+
+#### Shellcheck
+
+The flash script are checked with the shellcheck static analysis tool.
 
 ```
 make shellcheck
 ```
 
-### Integration tests
+#### Integration tests
 
 The flash script also have BATS integration tests. You don't have to install everything on your development machine. It should be enough to test the Linux variant in a Docker container and then run the macOS tests with TravisCI.
 
@@ -281,7 +239,8 @@ make test
 
 ### Test Linux from Mac
 
-This is for manual tests on my Mac to investigate Linux problems from time to time. With some help I found a way to spin up a
+For manual tests of the Linux version on a Mac there is a Vagrant environment. It can be used
+to investigate Linux problems when you don't have a baremetal Linux machine. With some help I found a way to spin up a
 VirtualBox Vagrant box with Ubuntu that maps the internal Apple SD card reader
 into the VM. Thanks to [Flexshot](https://github.com/Flexshot) for the helper
 functions I found in [NextThingCo/CHIP-SDK#15](https://github.com/NextThingCo/CHIP-SDK/pull/15).
