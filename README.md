@@ -208,7 +208,7 @@ To develop the flash scripts you need either a Linux or macOS machine to test lo
 
 The flash script are checked with the [`shellcheck`](https://www.shellcheck.net) static analysis tool.
 
-The integration tests can be run locally on macOS or Linux. We use BATS which is installed with NPM package. So you would need Node.js to setup a local development environment.
+The integration tests can be run locally on macOS or Linux. We use BATS which is installed with NPM package. So you would need Node.js to setup a local development environment. As the flash script runs `dd` and some commands with `sudo` it is recommended to use the isolated test environment with Docker or run this local tests in a macOS / Linux VM. 
 
 ```
 npm install
@@ -217,7 +217,7 @@ npm test
 
 ### Isolated tests with Docker
 
-If you do not want to install all these development tools (shellcheck, bats, node), you can use Docker instead.
+If you do not want to install all these development tools (shellcheck, bats, node) and don't trust the flash script enough, you can use Docker instead and run the shellcheck and integration tests in a much safer test environment.
 
 All you need is Docker and `make` installed to run the following tests.
 
