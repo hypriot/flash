@@ -107,14 +107,18 @@ beginswith() { case $2 in $1*) true;; *) false;; esac; }
 endswith() { case $2 in *$1) true;; *) false;; esac; }
 
 if [ $# -lt 1 ]; then
-  CONFIGURE_ONLY=1
-  echo "Configuration mode. No image will be written"
+  usage
 fi
 
 if [[ "$1" == "--help" ]]; then
   usage
 fi
 image=$1
+
+if [[ -z $image ]]; then
+  CONFIGURE_ONLY=1
+  echo "Configuration mode. No image will be written"
+fi
 
 filename=$(basename "${image}")
 extension="${filename##*.}"
