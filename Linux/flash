@@ -16,7 +16,7 @@ error()
 usage()
 {
   cat << EOF
-usage: $0 [options] name-of-rpi.img
+usage: $0 [options] [name-of-rpi.img]
 
 Flash a local or remote Raspberry Pi SD card image.
 
@@ -32,6 +32,10 @@ OPTIONS:
   --force|-f      Force flash without security prompt (for automation)
   --userdata|-u   Copy this cloud-init file to /boot/user-data
   --metadata|-m   Copy this cloud-init file to /boot/meta-data
+
+If no image is specified, the script will try to configure an existing
+image. This is useful to try several configuration without the need to
+rewrite the image every time.
 
 For HypriotOS < v1.7.0:
 
@@ -111,6 +115,11 @@ if [[ "$1" == "--help" ]]; then
 fi
 image=$1
 
+if [[ -z $image ]]; then
+  CONFIGURE_ONLY=1
+  echo "Configuration mode. No image will be written"
+fi
+
 filename=$(basename "${image}")
 extension="${filename##*.}"
 filename="${filename%.*}"
@@ -177,39 +186,41 @@ if [ ! -z "${CONFIG_FILE}" ]; then
   fi
 fi
 
-if [ -f "/tmp/${filename}" ]; then
-  image=/tmp/${filename}
-  echo "Using cached image ${image}"
-elif [ -f "/tmp/${filename}.img" ]; then
-   image=/tmp/${filename}.img
-   echo "Using cached image ${image}"
-else
-  if beginswith http:// "${image}" || beginswith https:// "${image}"; then
-    which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
-    echo "Downloading ${image} ..."
-    curl -L --fail -o "/tmp/image.img.${extension}" "${image}"
-    image=/tmp/image.img.${extension}
-  fi
+if [[ -z $CONFIGURE_ONLY ]] ; then
+  if [ -f "/tmp/${filename}" ]; then
+    image=/tmp/${filename}
+    echo "Using cached image ${image}"
+  elif [ -f "/tmp/${filename}.img" ]; then
+    image=/tmp/${filename}.img
+    echo "Using cached image ${image}"
+  else
+    if beginswith http:// "${image}" || beginswith https:// "${image}"; then
+      which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
+      echo "Downloading ${image} ..."
+      curl -L --fail -o "/tmp/image.img.${extension}" "${image}"
+      image=/tmp/image.img.${extension}
+    fi
 
-  if beginswith s3:// "${image}" ;then
-    which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
-    echo "Downloading ${image} ..."
-    aws s3 cp "${image}" "/tmp/image.img.${extension}"
-    image=/tmp/image.img.${extension}
-  fi
+    if beginswith s3:// "${image}" ;then
+      which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
+      echo "Downloading ${image} ..."
+      aws s3 cp "${image}" "/tmp/image.img.${extension}"
+      image=/tmp/image.img.${extension}
+    fi
 
-  if [ ! -f "${image}" ]; then
-    echo "File not found."
-    exit 10
-  fi
+    if [ ! -f "${image}" ]; then
+      echo "File not found."
+      exit 10
+    fi
 
-  if [[ "$(file "${image}")" == *"Zip archive"* ]]; then
-    which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
-    echo "Uncompressing ${image} ..."
-    unzip -o "${image}" -d /tmp
-    image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
-    image="/tmp/${image}"
-    echo "Use ${image}"
+    if [[ "$(file "${image}")" == *"Zip archive"* ]]; then
+      which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
+      echo "Uncompressing ${image} ..."
+      unzip -o "${image}" -d /tmp
+      image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
+      image="/tmp/${image}"
+      echo "Use ${image}"
+    fi
   fi
 fi
 
@@ -256,22 +267,24 @@ while true; do
   fi
 done
 
-echo "Flashing ${image} to ${disk} ..."
-if [[ -x $(which pv) ]]; then
-  # this sudo here is used for a login without pv's progress bar
-  # hiding the password prompt
-  size=$(sudo stat -c %s "${image}")
-  pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${disk}"
-else
-  echo "No 'pv' command found, so no progress available."
-  echo "Press CTRL+T if you want to see the current info of dd command."
-  sudo dd bs=1M "if=${image}" "of=${disk}"
+if [[ -z $CONFIGURE_ONLY ]] ; then
+  echo "Flashing ${image} to ${disk} ..."
+  if [[ -x $(which pv) ]]; then
+    # this sudo here is used for a login without pv's progress bar
+    # hiding the password prompt
+    size=$(sudo stat -c %s "${image}")
+    pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${disk}"
+  else
+    echo "No 'pv' command found, so no progress available."
+    echo "Press CTRL+T if you want to see the current info of dd command."
+    sudo dd bs=1M "if=${image}" "of=${disk}"
+  fi
+
+  echo "Waiting for device..."
+  udevadm settle
+
+  sudo hdparm -z "${disk}"
 fi
-
-echo "Waiting for device..."
-udevadm settle
-
-sudo hdparm -z "${disk}"
 
 echo "Mounting Disk"
 boot=/tmp/mnt.$$

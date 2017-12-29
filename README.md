@@ -71,7 +71,7 @@ sudo pip install awscli
 
 ```bash
 $ flash --help
-usage: flash [options] name-of-rpi.img
+usage: flash [options] [name-of-rpi.img]
 
 Flash a local or remote Raspberry Pi SD card image.
 
@@ -88,6 +88,9 @@ OPTIONS:
    --userdata|-u  Copy this cloud-init config file to /boot/user-data
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
 ```
+If no image is specified, the script will try to configure an existing
+image. This is useful to try several configuration without the need to
+rewrite the image every time.
 
 ## Configuration
 
