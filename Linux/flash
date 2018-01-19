@@ -131,10 +131,10 @@ fi
 
 case "${OSTYPE}" in
   darwin*)
-    source $(dirname $0)/darwin.func
+    source "$(dirname "$0")/darwin.func"
     ;;
   Linux|linux|linux-gnu*)
-    source $(dirname $0)/linux.func
+    source "$(dirname "$0")/linux.func"
     ;;
   *)
     echo Unknown OS: "${OSTYPE}"
@@ -255,7 +255,7 @@ while true; do
   writable=$?
 
   echo "Unmounting ${disk} ..."
-  umount_disk ${disk}
+  umount_disk "${disk}"
 
   if [ "$writable" ]; then
     break
@@ -372,7 +372,7 @@ umount_disk "${disk}"
 
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
-  rmdir ${boot}
+  rmdir "${boot}"
   echo "Finished."
 else
   echo "Something went wrong."
