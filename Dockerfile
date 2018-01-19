@@ -11,7 +11,7 @@ RUN useradd user && \
     echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN echo "#!/bin/bash\necho 1\n" >/sbin/hdparm && chmod +x /sbin/hdparm
 RUN cp "$(which mount)" "$(which mount).real" && \
-    echo "#!/bin/bash\nmnt=\$(echo \$3 | sed 's/1\$//')\noffset=\$(fdisk -l \$mnt | grep -i fat | awk '{print \$2*512}')\nsudo mount.real -o loop,offset=\$offset \$mnt \$4\n" >$(which mount)
+    echo "#!/bin/bash\nmnt=\$(echo \$3 | sed 's/1\$//')\noffset=\$(fdisk -l \$mnt | grep -i fat | awk '{print \$2*512}')\nsudo mount.real -o loop,offset=\$offset,uid=user,gid=user \$mnt \$4\n" >$(which mount)
 
 USER user
 CMD [ "npm", "test" ]
