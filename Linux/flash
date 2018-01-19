@@ -28,7 +28,7 @@ OPTIONS:
   --ssid|-s       Set WiFi SSID for this SD image
   --password|-p   Set WiFI password for this SD image
   --clusterlab|-l Start Cluster-Lab on boot: true or false
-  --device|-d     Card device to flash to (e.g. /dev/sdb)
+  --device|-d     Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
   --force|-f      Force flash without security prompt (for automation)
   --userdata|-u   Copy this cloud-init file to /boot/user-data
   --metadata|-m   Copy this cloud-init file to /boot/meta-data
@@ -131,15 +131,10 @@ fi
 
 case "${OSTYPE}" in
   darwin*)
-    echo This version does not support Mac.
-    echo Download Mac version from https://github.com/hypriot/flash instead.
-    exit 11
+    source $(dirname $0)/darwin.func
     ;;
-  Linux)
-    ;;
-  linux)
-    ;;
-  linux-gnu*)
+  Linux|linux|linux-gnu*)
+    source $(dirname $0)/linux.func
     ;;
   *)
     echo Unknown OS: "${OSTYPE}"
@@ -152,11 +147,7 @@ if endswith Microsoft "$(uname -r)"; then
   exit 11
 fi
 
-if ! sudo sh -c 'command -v hdparm' > /dev/null; then
-  echo "No 'hdparm' command found; please install hdparm by running:"
-  echo "sudo [apt-get|yum|something-else] install hdparm"
-  exit 1
-fi
+check_requirements
 
 if [ ! -z "${USER_DATA}" ]; then
   if [ ! -f "${USER_DATA}" ]; then
@@ -209,7 +200,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
     fi
 
     if [ ! -f "${image}" ]; then
-      echo "File not found."
+      echo "File ${image} not found."
       exit 10
     fi
 
@@ -221,15 +212,26 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
       image="/tmp/${image}"
       echo "Use ${image}"
     fi
+
+    if [[ "$(file "${image}")" == *"gzip compressed data"* ]]; then
+      echo "Uncompressing ${image} ..."
+      gzip -d "${image}" -c >/tmp/image.img
+      image=/tmp/image.img
+      echo "Use ${image}"
+    fi
+
+    if [[ "$(file "${image}")" == *"xz compressed data"* ]]; then
+      which xz 2>/dev/null || error "Error: unzip not found. Aborting" 1
+      echo "Uncompressing ${image} ..."
+      xz -d "${image}" -c >/tmp/image.img
+      image=/tmp/image.img
+      echo "Use ${image}"
+    fi
   fi
 fi
 
 while true; do
-  if [[ -x $(which lsblk) ]]; then
-    lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
-  else
-    df -h
-  fi
+  show_devices
   disk="$DEVICE"
   if [[ -z "${disk}" ]]; then
     # shellcheck disable=SC2162
@@ -249,17 +251,12 @@ while true; do
     done
   fi
 
-  if sudo hdparm -r "${disk}" | grep -q off; then
-    writable=1
-  else
-    writable=0
-  fi
+  check_device_is_writable "${disk}"
+  writable=$?
 
   echo "Unmounting ${disk} ..."
-  for i in $(df |grep "${disk}" | awk '{print $1}')
-  do
-    sudo umount "$i"
-  done
+  umount_disk ${disk}
+
   if [ "$writable" ]; then
     break
   else
@@ -272,7 +269,8 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   if [[ -x $(which pv) ]]; then
     # this sudo here is used for a login without pv's progress bar
     # hiding the password prompt
-    size=$(sudo stat -c %s "${image}")
+    sudo -v
+    size=$(/usr/bin/stat -c %s "${image}")
     pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${disk}"
   else
     echo "No 'pv' command found, so no progress available."
@@ -280,51 +278,39 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
     sudo dd bs=1M "if=${image}" "of=${disk}"
   fi
 
-  echo "Waiting for device..."
-  udevadm settle
-
-  sudo hdparm -z "${disk}"
+  read_partition_table "${disk}"
 fi
 
 echo "Mounting Disk"
-boot=/tmp/mnt.$$
-mkdir -p ${boot}
-
-if beginswith /dev/mmcblk "${disk}" ;then
-  dev="${disk}p1"
-elif beginswith /dev/loop "${disk}" ;then
-  dev="${disk}p1"
-else
-  dev="${disk}1"
-fi
+get_boot_mount_point
+boot=$_RET
 
 echo "Mounting ${dev} to customize..."
-FS_TYPE=$(sudo blkid -o value -s TYPE "${dev}" || echo vfat)
-sudo mount -t "${FS_TYPE}" "${dev}" "${boot}"
+mount_boot_disk "${disk}" "${boot}"
 
  if [ -f "${CONFIG_FILE}" ]; then
     if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
       echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
-      sudo cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
+      cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
     else
       echo "Copying ${CONFIG_FILE} to ${boot}/device-init.yaml ..."
-      sudo cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
+      cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
     fi
   fi
 
   if [[ -f "${BOOT_CONF}" ]]; then
     echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
-    sudo cp "${BOOT_CONF}" "${boot}/config.txt"
+    cp "${BOOT_CONF}" "${boot}/config.txt"
   fi
 
   if [ -f "${USER_DATA}" ]; then
     echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
-    sudo cp "${USER_DATA}" "${boot}/user-data"
+    cp "${USER_DATA}" "${boot}/user-data"
   fi
 
   if [ -f "${META_DATA}" ]; then
     echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
-    sudo cp "${META_DATA}" "${boot}/meta-data"
+    cp "${META_DATA}" "${boot}/meta-data"
   fi
 
 
@@ -332,21 +318,21 @@ if [ -f "${boot}/device-init.yaml" ]; then
   echo "Setting device-init"
   if [ ! -z "${SD_HOSTNAME}" ]; then
     echo "  Set hostname=${SD_HOSTNAME}"
-    sudo sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
+    sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${WIFI_SSID}" ]; then
     echo "  Set wlan0/ssid=${WIFI_SSID}"
-    sudo sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
-    sudo sed -i -e "s/.*ssid:.*\$/      ssid: \"${WIFI_SSID}\"/" "${boot}/device-init.yaml"
+    sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    sed -i -e "s/.*ssid:.*\$/      ssid: \"${WIFI_SSID}\"/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${WIFI_PASSWORD}" ]; then
     echo "  Set wlan0/password=${WIFI_PASSWORD}"
-    sudo sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
-    sudo sed -i -e "s/.*password:.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
+    sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    sed -i -e "s/.*password:.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${CLUSTERLAB}" ]; then
     echo "  Set Cluster-Lab/run_on_boot=${CLUSTERLAB}"
-    sudo sed -i -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
+    sed -i -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
   fi
 fi
 
@@ -354,12 +340,12 @@ fi
   if [ -f "${boot}/user-data" ]; then
     if [ ! -z "${SD_HOSTNAME}" ]; then
       echo "Set hostname=${SD_HOSTNAME}"
-      sudo sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/user-data"
+      sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/user-data"
     fi
 
     if [ ! -f "${boot}/meta-data" ]; then
       echo "Creating empty meta-data"
-      sudo touch "${boot}/meta-data"
+      touch "${boot}/meta-data"
     fi
   fi
 # legacy: /boot/occidentalis.txt of old Hector release
@@ -367,25 +353,22 @@ if [ -f "${boot}/occidentalis.txt" ]; then
   echo "Setting Occidentalis"
   if [ ! -z "${SD_HOSTNAME}" ]; then
     echo "  Set hostname=${SD_HOSTNAME}"
-    sudo sed -i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
+    sed -i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
   fi
   if [ ! -z "${WIFI_SSID}" ]; then
     echo "Set wifi_ssid=${WIFI_SSID}"
-    sudo sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
+    sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
   fi
   if [ ! -z "${WIFI_PASSWORD}" ]; then
     echo "Set wifi_password=${WIFI_PASSWORD}"
-    sudo sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
+    sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
   fi
 fi
 
 echo "Unmounting ${disk} ..."
 sleep 1
 
-for i in $(df | grep "${disk}" | awk '{print $1}')
-do
-  sudo umount "$i"
-done
+umount_disk "${disk}"
 
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then

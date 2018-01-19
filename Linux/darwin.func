@@ -1,0 +1,61 @@
+# Darwin specific functions -*- shell-script -*-
+
+alias grep="grep --color=never"
+
+# Check that the system has all the needed binaries/requirements in place
+check_requirements() {
+}
+
+# Show devices that are a likely destination for the tool to write an image
+show_devices() {
+  $(diskutil list | grep FDisk_partition_scheme | awk 'NF>1{print $NF}')
+}
+
+# Check that the target device can be written. It will return 0 in
+# this case and 1 if it is not writable
+check_device_is_writable() {
+  readonlymedia = $(diskutil info "${disk}" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
+  if [[ readonlymedia == "No" ]] ; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+# Get the directory where the boot volume will be mounted.
+get_boot_mount_point() {
+  _RET=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+}
+
+wait_for_disk() {
+  boot=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+  if [ "${boot}" == "" ]; then
+    COUNTER=0
+    while [ $COUNTER -lt 5 ]; do
+      sleep 1
+      boot=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+      if [ "${boot}" != "" ]; then
+        break
+      fi
+      (( COUNTER=COUNTER+1 ))
+    done
+  fi
+}
+
+find_boot_dev_name() {
+  # TODO
+}
+
+umount_disk() {
+  diskutil unmountDisk "${1}s1"
+  diskutil unmountDisk "${1}"
+}
+
+
+read_partition_table() {
+  # TODO
+}
+
+mount_boot_disk() {
+ # TODO
+}

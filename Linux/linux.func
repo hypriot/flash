@@ -1,0 +1,72 @@
+# Linux specific functions -*- shell-script -*-
+
+# Check that the system has all the needed binaries/requirements in place
+check_requirements() {
+  if ! sudo sh -c 'command -v hdparm' > /dev/null; then
+    echo "No 'hdparm' command found; please install hdparm by running:"
+    echo "sudo [apt-get|yum|something-else] install hdparm"
+    exit 1
+  fi
+}
+
+# Show devices that are a likely destination for the tool to write an image
+show_devices() {
+  if [[ -x $(which lsblk) ]]; then
+    lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
+  else
+    df -h
+  fi
+}
+
+# Check that the target device can be written. It will return 0 in
+# this case and 1 if it is not writable
+check_device_is_writable() {
+  if sudo hdparm -r "$1" | grep -q off; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+# Get the directory where the boot volume will be mounted
+get_boot_mount_point() {
+  _RET=/tmp/$(id -u)/mnt.$$
+  mkdir -p ${_RET}
+}
+
+find_boot_dev_name() {
+  if beginswith /dev/mmcblk "${1}" ;then
+    _RET="${1}p1"
+  elif beginswith /dev/loop "${1}" ;then
+    _RET="${1}p1"
+  else
+    _RET="${1}1"
+  fi
+}
+
+
+umount_disk() {
+  for i in $(df |grep "$1" | awk '{print $1}')
+  do
+    sudo umount "$i"
+  done
+}
+
+read_partition_table() {
+  sudo hdparm -z "$1"
+}
+
+mount_boot_disk() {
+  local disk=$1
+  local mount_point=$2
+  local dev
+
+  echo "Waiting for device..."
+  udevadm settle
+
+  find_boot_dev_name "${disk}"
+  dev=$_RET
+
+  sudo mount -o uid=$(id -u),gid=$(id -g) "${dev}" "${mount_point}"
+  ls -la "${mount_point}"
+}
