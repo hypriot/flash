@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Flash Raspberry Pi SD card images on your Mac
+# Flash Raspberry Pi SD card images on your PC or Mac
 # Stefan Scherer - scherer_stefan@icloud.com
 #
-# Linux Version by Matt Williams - matt@matthewkwilliams.com
+# Linux initial version by Matt Williams - matt@matthewkwilliams.com
 # MIT License
 
 set -eo pipefail
@@ -231,13 +231,19 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
 fi
 
 while true; do
-  show_devices
   disk="$DEVICE"
   if [[ -z "${disk}" ]]; then
-    # shellcheck disable=SC2162
-    read -p "Please pick your device: "
-    disk="${REPLY}"
-    [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
+
+    autodetect_device
+    disk="$_RET"
+
+    if [[ -z "${disk}" ]]; then
+      show_devices
+      # shellcheck disable=SC2162
+      read -p "Please pick your device: "
+      disk="${REPLY}"
+      [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
+    fi
   fi
   if [[ -z "${FORCE}" ]]; then
     while true; do
@@ -250,6 +256,9 @@ while true; do
       esac
     done
   fi
+
+  prepare_raw_disk "${disk}"
+  disk=$_RET
 
   check_device_is_writable "${disk}"
   writable=$?
@@ -265,17 +274,20 @@ while true; do
 done
 
 if [[ -z $CONFIGURE_ONLY ]] ; then
-  echo "Flashing ${image} to ${disk} ..."
+  get_raw_device_filename $disk
+  rawdisk=$_RET
+
+  echo "Flashing ${image} to ${rawodisk} ..."
   if [[ -x $(which pv) ]]; then
     # this sudo here is used for a login without pv's progress bar
     # hiding the password prompt
     sudo -v
     size=$(/usr/bin/stat -c %s "${image}")
-    pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${disk}"
+    pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${rawdisk}"
   else
     echo "No 'pv' command found, so no progress available."
     echo "Press CTRL+T if you want to see the current info of dd command."
-    sudo dd bs=1M "if=${image}" "of=${disk}"
+    sudo dd bs=1M "if=${image}" "of=${rawdisk}"
   fi
 
   read_partition_table "${disk}"
@@ -283,7 +295,7 @@ fi
 
 echo "Mounting Disk"
 get_boot_mount_point
-boot=$_RET
+boot="$_RET"
 
 echo "Mounting ${dev} to customize..."
 mount_boot_disk "${disk}" "${boot}"

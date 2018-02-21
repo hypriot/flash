@@ -1,4 +1,11 @@
-# Darwin specific functions -*- shell-script -*-
+# -*- shell-script -*-
+
+# Flash Raspberry Pi SD card images on your PC or Mac: Darwin specific
+# functions
+
+# Initial version by Luis Miguel Hernanz <lhernanz@gmail.com> based on
+# the original code by Stefan Scherer
+
 
 alias grep="grep --color=never"
 
@@ -6,13 +13,31 @@ alias grep="grep --color=never"
 check_requirements() {
 }
 
-# Show devices that are a likely destination for the tool to write an image
+# Try to identify the most likely device that the user will use to
+# write an image to.
+#
+# return _RET: the name of the device to use
+autodetect_devices() {
+  _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+
+  if [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; then
+    echo "No SD card found. Please insert SD card, I'll wait for it..."
+    while [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; do
+      sleep 1
+      _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+    done
+}
+
+# Show in the standard output the devices that are a likely
+# destination for the tool to write an image to.
 show_devices() {
   $(diskutil list | grep FDisk_partition_scheme | awk 'NF>1{print $NF}')
 }
 
 # Check that the target device can be written. It will return 0 in
 # this case and 1 if it is not writable
+#
+# @param arg1 device name to check
 check_device_is_writable() {
   readonlymedia = $(diskutil info "${disk}" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
   if [[ readonlymedia == "No" ]] ; then
@@ -22,18 +47,32 @@ check_device_is_writable() {
   fi
 }
 
+# Convert the device name into a raw device name that is suitable for
+# use by dd
+#
+# @param arg1 device name
+# @return _RET the raw device name
+get_raw_device_filename() {
+  _RET="${1//\/dev\//\/dev\/r}"
+}
+
 # Get the directory where the boot volume will be mounted.
+#
+# @return _RET mount point name
 get_boot_mount_point() {
   _RET=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
 }
 
+# Wait for the new created disk to be available
+#
+# @param arg1 device name to check
 wait_for_disk() {
-  boot=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+  boot=find_boot_dev_name $1
   if [ "${boot}" == "" ]; then
     COUNTER=0
     while [ $COUNTER -lt 5 ]; do
       sleep 1
-      boot=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+      boot=find_boot_dev_name $1
       if [ "${boot}" != "" ]; then
         break
       fi
@@ -42,20 +81,56 @@ wait_for_disk() {
   fi
 }
 
+# Find the device name of the boot partition
+#
+# @param arg1 the disk name containing the partition
 find_boot_dev_name() {
-  # TODO
+  _RET=$(df | grep --color=never "${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
 }
 
+# Unmount a disk
+#
+# @param arg1 the disk to unmount
 umount_disk() {
   diskutil unmountDisk "${1}s1"
   diskutil unmountDisk "${1}"
 }
 
 
+# Re-read the partition table of a device
+#
+# @param arg1 the device to analyze
 read_partition_table() {
-  # TODO
+  # NO-OP: this is not needed in Darwin
 }
 
+# Mount the boot disk in the specified mount point
+#
+# @param arg1 the device to mount. The boot partition will be found automatically
+# @param arg2 mount point
 mount_boot_disk() {
- # TODO
+ # NO-OP: Darwin will mount the boot partition automatically as soon
+ # as the new disk is detected
+}
+
+
+# Convert a image file into a destination disk
+#
+# @param arg1 the destination image file
+# @return _RET the disk that represents the image
+prepare_raw_disk() {
+  $rawdisk=$1
+  if [[ "$rawdisk" == *.dmg ]]; then
+    mv "$rawdisk" "${rawdisk}.readonly.dmg"
+    hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
+    rm -f "${rawdisk}.readonly.dmg"
+    disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
+    echo mounted FAT partition to "$disk"
+    if [ "$disk" == "" ]; then
+      echo Failed attaching "$rawdisk"
+      exit 5
+    fi
+    _RET=$disk
+  fi
+  _RET=$rawdisk
 }

@@ -1,4 +1,10 @@
-# Linux specific functions -*- shell-script -*-
+# -*- shell-script -*-
+
+# Flash Raspberry Pi SD card images on your PC or Mac Linux specific
+# functions
+
+# Initial version by Luis Miguel Hernanz <lhernanz@gmail.com> based on
+# the original code by Matt Williams
 
 # Check that the system has all the needed binaries/requirements in place
 check_requirements() {
@@ -9,7 +15,16 @@ check_requirements() {
   fi
 }
 
-# Show devices that are a likely destination for the tool to write an image
+# Try to identify the most likely device that the user will use to
+# write an image to.
+#
+# @return _RET the name of the device to use
+autodetect_devices() {
+  _RET=$(lsblk -n -o NAME -d | grep mmcblk)
+}
+
+# Show in the standard output the devices that are a likely
+# destination for the tool to write an image to.
 show_devices() {
   if [[ -x $(which lsblk) ]]; then
     lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
@@ -18,8 +33,30 @@ show_devices() {
   fi
 }
 
+# Convert a image file into a destination disk
+#
+# @param arg1 the destination image file
+# @return _RET the disk that represents the image
+prepare_raw_disk() {
+  if [[ "$rawdisk" == *.img ]]; then
+    error "Raw files not supported under Linux yet" 2
+  fi
+  _RET=$1
+}
+
+# Convert the device name into a raw device name that is suitable for
+# use by dd
+#
+# @param arg1 device name
+# @return _RET the raw device name
+get_raw_device_filename() {
+  _RET="${1}"
+}
+
 # Check that the target device can be written. It will return 0 in
 # this case and 1 if it is not writable
+#
+# @param arg1: device name to check
 check_device_is_writable() {
   if sudo hdparm -r "$1" | grep -q off; then
     return 1
@@ -29,11 +66,24 @@ check_device_is_writable() {
 }
 
 # Get the directory where the boot volume will be mounted
+#
+# @return _RET: mount point name
 get_boot_mount_point() {
   _RET=/tmp/$(id -u)/mnt.$$
   mkdir -p ${_RET}
 }
 
+# Wait for the new created disk to be available
+#
+# @param arg1 device name to check
+wait_for_disk() {
+  echo "Waiting for device $1"
+  udevadm settle
+}
+
+# Find the device name of the boot partition
+#
+# @param arg1 the disk name containing the partition
 find_boot_dev_name() {
   if beginswith /dev/mmcblk "${1}" ;then
     _RET="${1}p1"
@@ -45,6 +95,9 @@ find_boot_dev_name() {
 }
 
 
+# Unmount a disk
+#
+# @param arg1 the disk to unmount
 umount_disk() {
   for i in $(df |grep "$1" | awk '{print $1}')
   do
@@ -52,17 +105,23 @@ umount_disk() {
   done
 }
 
+# Re-read the partition table of a device
+#
+# @param arg1 the device to analyze
 read_partition_table() {
   sudo hdparm -z "$1"
 }
 
+# Mount the boot disk in the specified mount point
+#
+# @param arg1 the device to mount. The boot partition will be found automatically
+# @param arg2 mount point
 mount_boot_disk() {
   local disk=$1
   local mount_point=$2
   local dev
 
-  echo "Waiting for device..."
-  udevadm settle
+  wait_for_disk
 
   find_boot_dev_name "${disk}"
   dev=$_RET
