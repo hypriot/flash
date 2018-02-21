@@ -274,7 +274,7 @@ while true; do
 done
 
 if [[ -z $CONFIGURE_ONLY ]] ; then
-  get_raw_device_filename $disk
+  get_raw_device_filename "$disk"
   rawdisk=$_RET
 
   echo "Flashing ${image} to ${rawodisk} ..."
