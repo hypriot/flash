@@ -5,5 +5,5 @@ script:
   - npm install
   - brew install shellcheck
   - brew install pv
-  - shellcheck Darwin/flash Linux/flash
+  - shellcheck -s bash Darwin/flash Linux/flash Linux/*func
   - npm test
