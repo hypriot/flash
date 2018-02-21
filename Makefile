@@ -11,8 +11,8 @@ test: build
 	docker run --privileged -ti -v $(shell pwd):/code -v $(TMP_DIR):/tmp flash npm test
 	rm -rf $(TMP_DIR)
 
-shellcheck: build
-	docker run --rm -ti -v $(shell pwd):/code flash shellcheck Darwin/flash Linux/flash
+shellcheck:
+	docker run --rm -ti -v $(shell pwd):/mnt koalaman/shellcheck -s bash Darwin/flash Linux/flash Linux/*func
 
 tag:
 	git tag ${TAG}

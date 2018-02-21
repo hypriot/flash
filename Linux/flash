@@ -131,9 +131,11 @@ fi
 
 case "${OSTYPE}" in
   darwin*)
+    # shellcheck source=Linux/darwin.func
     source "$(dirname "$0")/darwin.func"
     ;;
   Linux|linux|linux-gnu*)
+    # shellcheck source=Linux/linux.func
     source "$(dirname "$0")/linux.func"
     ;;
   *)
@@ -277,7 +279,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   get_raw_device_filename "$disk"
   rawdisk=$_RET
 
-  echo "Flashing ${image} to ${rawodisk} ..."
+  echo "Flashing ${image} to ${rawdisk} ..."
   if [[ -x $(which pv) ]]; then
     # this sudo here is used for a login without pv's progress bar
     # hiding the password prompt
@@ -290,14 +292,14 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
     sudo dd bs=1M "if=${image}" "of=${rawdisk}"
   fi
 
-  read_partition_table "${disk}"
+  wait_for_disk "${disk}"
 fi
 
 echo "Mounting Disk"
-get_boot_mount_point
+get_boot_mount_point "${disk}"
 boot="$_RET"
 
-echo "Mounting ${dev} to customize..."
+echo "Mounting ${disk} to customize..."
 mount_boot_disk "${disk}" "${boot}"
 
  if [ -f "${CONFIG_FILE}" ]; then

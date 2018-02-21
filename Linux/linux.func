@@ -38,7 +38,7 @@ show_devices() {
 # @param arg1 the destination image file
 # @return _RET the disk that represents the image
 prepare_raw_disk() {
-  if [[ "$rawdisk" == *.img ]]; then
+  if [[ "$1" == *.img ]]; then
     error "Raw files not supported under Linux yet" 2
   fi
   _RET=$1
@@ -67,10 +67,11 @@ check_device_is_writable() {
 
 # Get the directory where the boot volume will be mounted
 #
+# @param arg1 the name of the device holding the volume to be mounted
 # @return _RET: mount point name
 get_boot_mount_point() {
-  _RET=/tmp/$(id -u)/mnt.$$
-  mkdir -p ${_RET}
+  _RET=/tmp/"$(id -u)"/mnt.$$
+  mkdir -p "${_RET}"
 }
 
 # Wait for the new created disk to be available
@@ -79,6 +80,7 @@ get_boot_mount_point() {
 wait_for_disk() {
   echo "Waiting for device $1"
   udevadm settle
+  sudo hdparm -z "$1"
 }
 
 # Find the device name of the boot partition
@@ -105,13 +107,6 @@ umount_disk() {
   done
 }
 
-# Re-read the partition table of a device
-#
-# @param arg1 the device to analyze
-read_partition_table() {
-  sudo hdparm -z "$1"
-}
-
 # Mount the boot disk in the specified mount point
 #
 # @param arg1 the device to mount. The boot partition will be found automatically
@@ -121,11 +116,9 @@ mount_boot_disk() {
   local mount_point=$2
   local dev
 
-  wait_for_disk
-
   find_boot_dev_name "${disk}"
   dev=$_RET
 
-  sudo mount -o uid=$(id -u),gid=$(id -g) "${dev}" "${mount_point}"
+  sudo mount -o uid="$(id -u)",gid="$(id -g)" "${dev}" "${mount_point}"
   ls -la "${mount_point}"
 }
