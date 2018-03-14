@@ -142,14 +142,14 @@ elif [ -f "/tmp/${filename}.img" ]; then
   echo "Using cached image ${image}"
 else
   if beginswith http:// "${image}" || beginswith https:// "${image}"; then
-    which curl >/dev/null || (echo "Error: curl not found. Aborting" && exit 1)
+    command -v curl >/dev/null || (echo "Error: curl not found. Aborting" && exit 1)
     echo "Downloading ${image} ..."
     curl -L --fail -o "/tmp/image.img.${extension}" "${image}"
     image=/tmp/image.img.${extension}
   fi
 
   if beginswith s3:// "${image}"; then
-    which aws >/dev/null || (echo "Error: aws not found. Aborting" && exit 1)
+    command -v aws >/dev/null || (echo "Error: aws not found. Aborting" && exit 1)
     echo "Downloading ${image} ..."
     aws s3 cp "${image}" "/tmp/image.img.${extension}"
     image=/tmp/image.img.${extension}
@@ -233,7 +233,7 @@ done
 
 echo "Flashing ${image} to ${disk} ..."
 rawdisk=${disk//\/dev\//\/dev\/r}
-if [[ -x $(which pv) ]]; then
+if [[ -x $(command -v pv) ]]; then
   # this sudo here is used for a login without pv's progress bar
   # hiding the password prompt
   size=$(sudo /usr/bin/stat -f %z ${image})

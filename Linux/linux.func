@@ -26,7 +26,7 @@ autodetect_devices() {
 # Show in the standard output the devices that are a likely
 # destination for the tool to write an image to.
 show_devices() {
-  if [[ -x $(which lsblk) ]]; then
+  if [[ -x $(command -v lsblk) ]]; then
     lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
   else
     df -h

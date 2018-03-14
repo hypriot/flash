@@ -188,14 +188,14 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
     echo "Using cached image ${image}"
   else
     if beginswith http:// "${image}" || beginswith https:// "${image}"; then
-      which curl 2>/dev/null || error "Error: curl not found. Aborting" 1
+      command -v curl 2>/dev/null || error "Error: curl not found. Aborting" 1
       echo "Downloading ${image} ..."
       curl -L --fail -o "/tmp/image.img.${extension}" "${image}"
       image=/tmp/image.img.${extension}
     fi
 
     if beginswith s3:// "${image}" ;then
-      which aws 2>/dev/null || error "Error: aws not found. Aborting" 1
+      command -v aws 2>/dev/null || error "Error: aws not found. Aborting" 1
       echo "Downloading ${image} ..."
       aws s3 cp "${image}" "/tmp/image.img.${extension}"
       image=/tmp/image.img.${extension}
@@ -207,7 +207,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
     fi
 
     if [[ "$(file "${image}")" == *"Zip archive"* ]]; then
-      which unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
+      command -v unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
       echo "Uncompressing ${image} ..."
       unzip -o "${image}" -d /tmp
       image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
@@ -223,7 +223,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
     fi
 
     if [[ "$(file "${image}")" == *"xz compressed data"* ]]; then
-      which xz 2>/dev/null || error "Error: unzip not found. Aborting" 1
+      command -v xz 2>/dev/null || error "Error: unzip not found. Aborting" 1
       echo "Uncompressing ${image} ..."
       xz -d "${image}" -c >/tmp/image.img
       image=/tmp/image.img
@@ -280,7 +280,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   rawdisk=$_RET
 
   echo "Flashing ${image} to ${rawdisk} ..."
-  if [[ -x $(which pv) ]]; then
+  if [[ -x $(command -v pv) ]]; then
     # this sudo here is used for a login without pv's progress bar
     # hiding the password prompt
     sudo -v
