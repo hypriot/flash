@@ -6,12 +6,10 @@ build:
 	docker build -t flash .
 
 TMP_DIR ::= $(shell mktemp -d)
-
-ifeq ($(strip $(TMP_DIR)),)
-  TMP_DIR="/tmp"
-endif
+TMP_DIR ?= "/tmp/hypriot-flash"
 
 test: build
+	mkdir -p $(TMP_DIR)
 	docker run --privileged -ti -v $(shell pwd):/code -v $(TMP_DIR):/tmp flash npm test
 	rm -rf $(TMP_DIR)
 
