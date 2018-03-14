@@ -7,6 +7,10 @@ build:
 
 TMP_DIR ::= $(shell mktemp -d)
 
+ifeq ($(strip $(TMP_DIR)),)
+  TMP_DIR="/tmp"
+endif
+
 test: build
 	docker run --privileged -ti -v $(shell pwd):/code -v $(TMP_DIR):/tmp flash npm test
 	rm -rf $(TMP_DIR)
