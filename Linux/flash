@@ -131,12 +131,248 @@ fi
 
 case "${OSTYPE}" in
   darwin*)
-    # shellcheck source=Linux/darwin.func
-    source "$(dirname "$0")/darwin.func"
+    alias grep="grep --color=never"
+
+    # Check that the system has all the needed binaries/requirements in place
+    check_requirements() {
+      ## NO-OP in Darwin
+      true
+    }
+
+    # Try to identify the most likely device that the user will use to
+    # write an image to.
+    #
+    # return _RET: the name of the device to use
+    autodetect_devices() {
+      _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+
+      if [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; then
+        echo "No SD card found. Please insert SD card, I'll wait for it..."
+        while [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; do
+          sleep 1
+          _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+        done
+      fi
+    }
+
+    # Show in the standard output the devices that are a likely
+    # destination for the tool to write an image to.
+    show_devices() {
+      diskutil list | grep FDisk_partition_scheme | awk 'NF>1{print $NF}'
+    }
+
+    # Check that the target device can be written. It will return 0 in
+    # this case and 1 if it is not writable
+    #
+    # @param arg1 device name to check
+    check_device_is_writable() {
+      readonlymedia=$(diskutil info "${disk}" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
+      if [[ $readonlymedia == "No" ]] ; then
+        return 1
+      else
+        return 0
+      fi
+    }
+
+    # Convert the device name into a raw device name that is suitable for
+    # use by dd
+    #
+    # @param arg1 device name
+    # @return _RET the raw device name
+    get_raw_device_filename() {
+      _RET="${1//\/dev\//\/dev\/r}"
+    }
+
+    # Get the directory where the boot volume will be mounted.
+    #
+    # @param arg1 the name of the device holding the volume to be mounted
+    # @return _RET mount point name
+    get_boot_mount_point() {
+      _RET=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+    }
+
+    # Wait for the new created disk to be available
+    #
+    # @param arg1 device name to check
+    wait_for_disk() {
+      find_boot_dev_name "$1"
+      boot=$_RET
+      if [ "${boot}" == "" ]; then
+        COUNTER=0
+        while [ $COUNTER -lt 5 ]; do
+          sleep 1
+          boot=find_boot_dev_name $1
+          if [ "${boot}" != "" ]; then
+            break
+          fi
+          (( COUNTER=COUNTER+1 ))
+        done
+      fi
+    }
+
+    # Find the device name of the boot partition
+    #
+    # @param arg1 the disk name containing the partition
+    find_boot_dev_name() {
+      _RET=$(df | grep --color=never "${disk}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+    }
+
+    # Unmount a disk
+    #
+    # @param arg1 the disk to unmount
+    umount_disk() {
+      diskutil unmountDisk "${1}s1"
+      diskutil unmountDisk "${1}"
+    }
+
+    # Mount the boot disk in the specified mount point
+    #
+    # @param arg1 the device to mount. The boot partition will be found automatically
+    # @param arg2 mount point
+    mount_boot_disk() {
+      # NO-OP: Darwin will mount the boot partition automatically as soon
+      # as the new disk is detected
+      true
+    }
+
+    # Convert a image file into a destination disk
+    #
+    # @param arg1 the destination image file
+    # @return _RET the disk that represents the image
+    prepare_raw_disk() {
+      rawdisk="$1"
+      if [[ "$rawdisk" == *.dmg ]]; then
+        mv "$rawdisk" "${rawdisk}.readonly.dmg"
+        hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
+        rm -f "${rawdisk}.readonly.dmg"
+        disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
+        echo mounted FAT partition to "$disk"
+        if [ "$disk" == "" ]; then
+          echo Failed attaching "$rawdisk"
+          exit 5
+        fi
+        _RET=$disk
+      fi
+      _RET=$rawdisk
+    }
     ;;
   Linux|linux|linux-gnu*)
-    # shellcheck source=Linux/linux.func
-    source "$(dirname "$0")/linux.func"
+    # Check that the system has all the needed binaries/requirements in place
+    check_requirements() {
+      if ! sudo sh -c 'command -v hdparm' > /dev/null; then
+        echo "No 'hdparm' command found; please install hdparm by running:"
+        echo "sudo [apt-get|yum|something-else] install hdparm"
+        exit 1
+      fi
+    }
+
+    # Try to identify the most likely device that the user will use to
+    # write an image to.
+    #
+    # @return _RET the name of the device to use
+    autodetect_devices() {
+      _RET=$(lsblk -n -o NAME -d | grep mmcblk)
+    }
+
+    # Show in the standard output the devices that are a likely
+    # destination for the tool to write an image to.
+    show_devices() {
+      if [[ -x $(command -v lsblk) ]]; then
+        lsblk --output NAME,SIZE,TYPE,MOUNTPOINT
+      else
+        df -h
+      fi
+    }
+
+    # Convert a image file into a destination disk
+    #
+    # @param arg1 the destination image file
+    # @return _RET the disk that represents the image
+    prepare_raw_disk() {
+      if [[ "$1" == *.img ]]; then
+        error "Raw files not supported under Linux yet" 2
+      fi
+      _RET=$1
+    }
+
+    # Convert the device name into a raw device name that is suitable for
+    # use by dd
+    #
+    # @param arg1 device name
+    # @return _RET the raw device name
+    get_raw_device_filename() {
+      _RET="${1}"
+    }
+
+    # Check that the target device can be written. It will return 0 in
+    # this case and 1 if it is not writable
+    #
+    # @param arg1: device name to check
+    check_device_is_writable() {
+      if sudo hdparm -r "$1" | grep -q off; then
+        return 1
+      else
+        return 0
+      fi
+    }
+
+    # Get the directory where the boot volume will be mounted
+    #
+    # @param arg1 the name of the device holding the volume to be mounted
+    # @return _RET: mount point name
+    get_boot_mount_point() {
+      _RET=/tmp/"$(id -u)"/mnt.$$
+      mkdir -p "${_RET}"
+    }
+
+    # Wait for the new created disk to be available
+    #
+    # @param arg1 device name to check
+    wait_for_disk() {
+      echo "Waiting for device $1"
+      udevadm settle
+      sudo hdparm -z "$1"
+    }
+
+    # Find the device name of the boot partition
+    #
+    # @param arg1 the disk name containing the partition
+    find_boot_dev_name() {
+      if beginswith /dev/mmcblk "${1}" ;then
+        _RET="${1}p1"
+      elif beginswith /dev/loop "${1}" ;then
+        _RET="${1}p1"
+      else
+        _RET="${1}1"
+      fi
+    }
+
+
+    # Unmount a disk
+    #
+    # @param arg1 the disk to unmount
+    umount_disk() {
+      for i in $(df |grep "$1" | awk '{print $1}')
+      do
+        sudo umount "$i"
+      done
+    }
+
+    # Mount the boot disk in the specified mount point
+    #
+    # @param arg1 the device to mount. The boot partition will be found automatically
+    # @param arg2 mount point
+    mount_boot_disk() {
+      local disk=$1
+      local mount_point=$2
+      local dev
+
+      find_boot_dev_name "${disk}"
+      dev=$_RET
+
+      sudo mount -o uid="$(id -u)",gid="$(id -g)" "${dev}" "${mount_point}"
+      ls -la "${mount_point}"
+    }
     ;;
   *)
     echo Unknown OS: "${OSTYPE}"

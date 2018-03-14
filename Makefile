@@ -14,7 +14,7 @@ test: build
 	rm -rf $(TMP_DIR)
 
 shellcheck:
-	docker run --rm -ti -v $(shell pwd):/mnt koalaman/shellcheck -s bash Darwin/flash Linux/flash Linux/*func
+	docker run --rm -ti -v $(shell pwd):/mnt koalaman/shellcheck -s bash Darwin/flash Linux/flash
 
 tag:
 	git tag ${TAG}
