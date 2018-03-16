@@ -132,6 +132,8 @@ fi
 case "${OSTYPE}" in
   darwin*)
     alias grep="grep --color=never"
+    size_opt="-f %z"
+    bs_size=1m
 
     # Check that the system has all the needed binaries/requirements in place
     check_requirements() {
@@ -143,7 +145,8 @@ case "${OSTYPE}" in
     # write an image to.
     #
     # return _RET: the name of the device to use
-    autodetect_devices() {
+    autodetect_device() {
+      set +e
       _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
 
       if [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; then
@@ -153,6 +156,7 @@ case "${OSTYPE}" in
           _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
         done
       fi
+      set -e
     }
 
     # Show in the standard output the devices that are a likely
@@ -166,11 +170,16 @@ case "${OSTYPE}" in
     #
     # @param arg1 device name to check
     check_device_is_writable() {
-      readonlymedia=$(diskutil info "${disk}" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
+      disk=$1
+      if [[ "$disk" == *.dmg ]]; then
+        _RET=1
+        return
+      fi
+      readonlymedia=$(diskutil info "$disk" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
       if [[ $readonlymedia == "No" ]] ; then
-        return 1
+        _RET=1
       else
-        return 0
+        _RET=0
       fi
     }
 
@@ -180,7 +189,7 @@ case "${OSTYPE}" in
     # @param arg1 device name
     # @return _RET the raw device name
     get_raw_device_filename() {
-      _RET="${1//\/dev\//\/dev\/r}"
+      _RET="${1//\/dev\///dev/r}"
     }
 
     # Get the directory where the boot volume will be mounted.
@@ -195,6 +204,21 @@ case "${OSTYPE}" in
     #
     # @param arg1 device name to check
     wait_for_disk() {
+      # helper for macOS CI
+      rawdisk="$1"
+      if [[ "$rawdisk" == *.dmg ]]; then
+        mv "$rawdisk" "${rawdisk}.readonly.dmg"
+        hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
+        rm -f "${rawdisk}.readonly.dmg"
+        disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
+        echo mounted FAT partition to "$disk"
+        if [ "$disk" == "" ]; then
+          echo Failed attaching "$rawdisk"
+          exit 5
+        fi
+      fi
+
+      set +e
       find_boot_dev_name "$1"
       boot=$_RET
       if [ "${boot}" == "" ]; then
@@ -208,6 +232,7 @@ case "${OSTYPE}" in
           (( COUNTER=COUNTER+1 ))
         done
       fi
+      set -e
     }
 
     # Find the device name of the boot partition
@@ -221,10 +246,19 @@ case "${OSTYPE}" in
     #
     # @param arg1 the disk to unmount
     umount_disk() {
-      diskutil unmountDisk "${1}s1"
-      diskutil unmountDisk "${1}"
+      disk=$1
+      if [[ "$disk" == *.dmg ]]; then
+        return
+      fi
+      set +e
+      diskutil unmountDisk "${disk}s1"
+      set -e
+      diskutil unmountDisk "${disk}"
     }
 
+    detach() {
+      hdiutil detach "${1}"
+    }
     # Mount the boot disk in the specified mount point
     #
     # @param arg1 the device to mount. The boot partition will be found automatically
@@ -235,28 +269,31 @@ case "${OSTYPE}" in
       true
     }
 
-    # Convert a image file into a destination disk
-    #
-    # @param arg1 the destination image file
-    # @return _RET the disk that represents the image
     prepare_raw_disk() {
-      rawdisk="$1"
-      if [[ "$rawdisk" == *.dmg ]]; then
-        mv "$rawdisk" "${rawdisk}.readonly.dmg"
-        hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
-        rm -f "${rawdisk}.readonly.dmg"
-        disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
-        echo mounted FAT partition to "$disk"
-        if [ "$disk" == "" ]; then
-          echo Failed attaching "$rawdisk"
-          exit 5
-        fi
-        _RET=$disk
-      fi
-      _RET=$rawdisk
+      _RET=$1
+    }
+
+    cleanup() {
+      true
+    }
+
+    sudo_prompt() {
+      # Do not use sudo -v otherwise Travis CI will hang.
+      true
+    }
+
+    play_ok() {
+      afplay /System/Library/Sounds/Bottle.aiff
+    }
+
+    play_warn() {
+      afplay /System/Library/Sounds/Basso.aiff
     }
     ;;
   Linux|linux|linux-gnu*)
+    size_opt="-c %s"
+    bs_size=1M
+
     # Check that the system has all the needed binaries/requirements in place
     check_requirements() {
       if ! sudo sh -c 'command -v hdparm' > /dev/null; then
@@ -270,7 +307,7 @@ case "${OSTYPE}" in
     # write an image to.
     #
     # @return _RET the name of the device to use
-    autodetect_devices() {
+    autodetect_device() {
       _RET=$(lsblk -n -o NAME -d | grep mmcblk)
     }
 
@@ -310,9 +347,9 @@ case "${OSTYPE}" in
     # @param arg1: device name to check
     check_device_is_writable() {
       if sudo hdparm -r "$1" | grep -q off; then
-        return 1
+        _RET=1
       else
-        return 0
+        _RET=0
       fi
     }
 
@@ -358,6 +395,10 @@ case "${OSTYPE}" in
       done
     }
 
+    detach() {
+      umount_disk "$1"
+    }
+
     # Mount the boot disk in the specified mount point
     #
     # @param arg1 the device to mount. The boot partition will be found automatically
@@ -372,6 +413,24 @@ case "${OSTYPE}" in
 
       sudo mount -o uid="$(id -u)",gid="$(id -g)" "${dev}" "${mount_point}"
       ls -la "${mount_point}"
+    }
+
+    cleanup() {
+      rmdir "$1"
+    }
+
+    sudo_prompt() {
+      # this sudo here is used for a login without pv's progress bar
+      # hiding the password prompt
+      sudo -v
+    }
+
+    play_ok() {
+      true
+    }
+
+    play_warn() {
+      true
     }
     ;;
   *)
@@ -471,7 +530,6 @@ fi
 while true; do
   disk="$DEVICE"
   if [[ -z "${disk}" ]]; then
-
     autodetect_device
     disk="$_RET"
 
@@ -499,14 +557,15 @@ while true; do
   disk=$_RET
 
   check_device_is_writable "${disk}"
-  writable=$?
+  writable=$_RET
 
   echo "Unmounting ${disk} ..."
   umount_disk "${disk}"
 
-  if [ "$writable" ]; then
+  if [ "$writable" == "1" ]; then
     break
   else
+    play_warn
     echo "The SD card is write protected. Please eject, remove protection and insert again."
   fi
 done
@@ -517,11 +576,9 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
 
   echo "Flashing ${image} to ${rawdisk} ..."
   if [[ -x $(command -v pv) ]]; then
-    # this sudo here is used for a login without pv's progress bar
-    # hiding the password prompt
-    sudo -v
-    size=$(/usr/bin/stat -c %s "${image}")
-    pv -s "${size}" < "${image}" | sudo dd bs=1M "of=${rawdisk}"
+    sudo_prompt
+    size=$(/usr/bin/stat "$size_opt" "${image}")
+    pv -s "${size}" < "${image}" | sudo dd bs=$bs_size "of=${rawdisk}"
   else
     echo "No 'pv' command found, so no progress available."
     echo "Press CTRL+T if you want to see the current info of dd command."
@@ -618,12 +675,15 @@ fi
 echo "Unmounting ${disk} ..."
 sleep 1
 
-umount_disk "${disk}"
+set +e
+detach "${disk}"
 
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
-  rmdir "${boot}"
+  cleanup "${boot}"
+  play_ok
   echo "Finished."
 else
+  play_warn
   echo "Something went wrong."
 fi
