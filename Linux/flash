@@ -172,6 +172,7 @@ case "${OSTYPE}" in
     check_device_is_writable() {
       disk=$1
       if [[ "$disk" == *.dmg ]]; then
+        # CI helper
         _RET=1
         return
       fi
@@ -346,7 +347,14 @@ case "${OSTYPE}" in
     #
     # @param arg1: device name to check
     check_device_is_writable() {
-      if sudo hdparm -r "$1" | grep -q off; then
+      disk=$1
+      if [[ "$disk" == "loo" ]]; then
+        # CI helper
+        _RET=1
+        return
+      fi
+
+      if sudo hdparm -r "$disk" | grep -q off; then
         _RET=1
       else
         _RET=0
