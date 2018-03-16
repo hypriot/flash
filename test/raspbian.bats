@@ -12,7 +12,7 @@ teardown() {
 
 @test "flash with url to Raspbian LITE zip works" {
   skip "Download is really slow"
-  run ./$OS/flash -f -d $img https://downloads.raspberrypi.org/raspbian_lite_latest
+  run ./flash -f -d $img https://downloads.raspberrypi.org/raspbian_lite_latest
   assert_success
   assert_output_contains Finished.
 

@@ -18,7 +18,7 @@ teardown() {
 }
 
 @test "cloud-init: flash works" {
-  run ./$OS/flash -f -d $img cloud-init.img
+  run ./flash -f -d $img cloud-init.img
   assert_success
 
   assert_output_contains Finished.
@@ -34,7 +34,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --hostname sets hostname" {
-  run ./$OS/flash -f -d $img --hostname myhost cloud-init.img
+  run ./flash -f -d $img --hostname myhost cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -49,7 +49,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --config does not replace user-data" {
-  run ./$OS/flash -f -d $img --config test/resources/good.yml cloud-init.img
+  run ./flash -f -d $img --config test/resources/good.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -64,7 +64,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --userdata replaces user-data" {
-  run ./$OS/flash -f -d $img --userdata test/resources/good.yml cloud-init.img
+  run ./flash -f -d $img --userdata test/resources/good.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -79,7 +79,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --metadata replaces meta-data" {
-  run ./$OS/flash -f -d $img --userdata test/resources/good.yml --metadata test/resources/meta.yml cloud-init.img
+  run ./flash -f -d $img --userdata test/resources/good.yml --metadata test/resources/meta.yml cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -94,7 +94,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --bootconf replaces config.txt" {
-  run ./$OS/flash -f -d $img --bootconf test/resources/no-uart.txt cloud-init.img
+  run ./flash -f -d $img --bootconf test/resources/no-uart.txt cloud-init.img
   assert_success
   assert_output_contains Finished.
 
