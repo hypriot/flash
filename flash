@@ -220,13 +220,14 @@ case "${OSTYPE}" in
       fi
 
       set +e
-      find_boot_dev_name "$1"
+      find_boot_dev_name "$rawdisk"
       boot=$_RET
       if [ "${boot}" == "" ]; then
         COUNTER=0
         while [ $COUNTER -lt 5 ]; do
           sleep 1
-          boot=find_boot_dev_name $1
+          find_boot_dev_name "$rawdisk"
+          boot=$_RET
           if [ "${boot}" != "" ]; then
             break
           fi
