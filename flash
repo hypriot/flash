@@ -293,7 +293,7 @@ case "${OSTYPE}" in
     }
 
     sed_i() {
-      sed -i "$@"
+      sed -i "" "$@"
     }
     ;;
   Linux|linux|linux-gnu*)
