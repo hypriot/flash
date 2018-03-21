@@ -1,13 +1,13 @@
 load test_helper
 
 @test "flash --help shows usage" {
-  run ./$OS/flash --help
+  run ./flash --help
   [ "$status" -eq 1 ]
   assert_output_contains usage:
 }
 
 @test "flash without parameters shows usage" {
-  run ./$OS/flash
+  run ./flash
   [ "$status" -eq 1 ]
   assert_output_contains usage:
 }

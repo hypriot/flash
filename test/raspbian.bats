@@ -12,7 +12,7 @@ teardown() {
 
 @test "flash with url to Raspbian LITE zip works" {
   skip "Download is really slow"
-  run ./$OS/flash -f -d $img https://downloads.raspberrypi.org/raspbian_lite_latest
+  run ./flash -f -d $img https://downloads.raspberrypi.org/raspbian_lite_latest
   assert_success
   assert_output_contains Finished.
 
@@ -25,7 +25,7 @@ teardown() {
   assert_success
   assert_output_contains "dtparam=audio=on"
 
-  [[ ! -f "/tmp/boot/device-init.yaml" ]]
-  [[ ! -f "/tmp/boot/user-data" ]]
-  [[ ! -f "/tmp/boot/meta-data" ]]
+  assert [ ! -f "/tmp/boot/device-init.yaml" ]
+  assert [ ! -f "/tmp/boot/user-data" ]
+  assert [ ! -f "/tmp/boot/meta-data" ]
 }

@@ -38,7 +38,7 @@ At the moment only Mac OS X and Linux is supported.
 Download the appropriate version for Linux or Mac with this command
 
 ```bash
-curl -O https://raw.githubusercontent.com/hypriot/flash/master/$(uname -s)/flash
+curl -O https://raw.githubusercontent.com/hypriot/flash/master/flash
 chmod +x flash
 sudo mv flash /usr/local/bin/flash
 ```
@@ -88,6 +88,7 @@ OPTIONS:
    --userdata|-u  Copy this cloud-init config file to /boot/user-data
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
 ```
+
 If no image is specified, the script will try to configure an existing
 image. This is useful to try several configuration without the need to
 rewrite the image every time.
@@ -211,7 +212,7 @@ To develop the flash scripts you need either a Linux or macOS machine to test lo
 
 The flash script are checked with the [`shellcheck`](https://www.shellcheck.net) static analysis tool.
 
-The integration tests can be run locally on macOS or Linux. We use BATS which is installed with NPM package. So you would need Node.js to setup a local development environment. As the flash script runs `dd` and some commands with `sudo` it is recommended to use the isolated test environment with Docker or run this local tests in a macOS / Linux VM. 
+The integration tests can be run locally on macOS or Linux. We use BATS which is installed with NPM package. So you would need Node.js to setup a local development environment. As the flash script runs `dd` and some commands with `sudo` it is recommended to use the isolated test environment with Docker or run this local tests in a macOS / Linux VM.
 
 ```
 npm install
@@ -256,5 +257,5 @@ the `Vagrantfile`.
 vagrant up --provider virtualbox
 vagrant ssh
 cd /vagrant
-./Linux/flash hypriotos-rpi-v1.7.1.img.zip
+./flash hypriotos-rpi-v1.7.1.img.zip
 ```
