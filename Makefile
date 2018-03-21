@@ -14,7 +14,7 @@ test: build
 	rm -rf $(TMP_DIR)
 
 shellcheck:
-	docker run --rm -ti -v $(shell pwd):/mnt koalaman/shellcheck -s bash flash
+	docker run --rm -ti -v $(shell pwd):/mnt -w /mnt koalaman/shellcheck -s bash flash
 
 tag:
 	git tag ${TAG}
