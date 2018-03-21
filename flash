@@ -291,6 +291,10 @@ case "${OSTYPE}" in
     play_warn() {
       afplay /System/Library/Sounds/Basso.aiff
     }
+
+    sed_i() {
+      sed -i "$@"
+    }
     ;;
   Linux|linux|linux-gnu*)
     size_opt="-c %s"
@@ -440,6 +444,10 @@ case "${OSTYPE}" in
 
     play_warn() {
       true
+    }
+
+    sed_i() {
+      sed -i "$@"
     }
     ;;
   *)
@@ -634,21 +642,21 @@ if [ -f "${boot}/device-init.yaml" ]; then
   echo "Setting device-init"
   if [ ! -z "${SD_HOSTNAME}" ]; then
     echo "  Set hostname=${SD_HOSTNAME}"
-    sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
+    sed_i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${WIFI_SSID}" ]; then
     echo "  Set wlan0/ssid=${WIFI_SSID}"
-    sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
-    sed -i -e "s/.*ssid:.*\$/      ssid: \"${WIFI_SSID}\"/" "${boot}/device-init.yaml"
+    sed_i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    sed_i -e "s/.*ssid:.*\$/      ssid: \"${WIFI_SSID}\"/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${WIFI_PASSWORD}" ]; then
     echo "  Set wlan0/password=${WIFI_PASSWORD}"
-    sed -i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
-    sed -i -e "s/.*password:.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
+    sed_i -e "s/.*wlan0:.*\$/    wlan0:/" "${boot}/device-init.yaml"
+    sed_i -e "s/.*password:.*\$/      password: \"${WIFI_PASSWORD}\"/" "${boot}/device-init.yaml"
   fi
   if [ ! -z "${CLUSTERLAB}" ]; then
     echo "  Set Cluster-Lab/run_on_boot=${CLUSTERLAB}"
-    sed -i -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
+    sed_i -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
   fi
 fi
 
@@ -656,7 +664,7 @@ fi
   if [ -f "${boot}/user-data" ]; then
     if [ ! -z "${SD_HOSTNAME}" ]; then
       echo "Set hostname=${SD_HOSTNAME}"
-      sed -i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/user-data"
+      sed_i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/user-data"
     fi
 
     if [ ! -f "${boot}/meta-data" ]; then
@@ -669,15 +677,15 @@ if [ -f "${boot}/occidentalis.txt" ]; then
   echo "Setting Occidentalis"
   if [ ! -z "${SD_HOSTNAME}" ]; then
     echo "  Set hostname=${SD_HOSTNAME}"
-    sed -i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
+    sed_i -e "s/.*hostname.*=.*\$/hostname=${SD_HOSTNAME}/" "${boot}/occidentalis.txt"
   fi
   if [ ! -z "${WIFI_SSID}" ]; then
     echo "Set wifi_ssid=${WIFI_SSID}"
-    sed -i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
+    sed_i -e "s/.*wifi_ssid.*=.*\$/wifi_ssid=${WIFI_SSID}/" "${boot}/occidentalis.txt"
   fi
   if [ ! -z "${WIFI_PASSWORD}" ]; then
     echo "Set wifi_password=${WIFI_PASSWORD}"
-    sed -i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
+    sed_i -e "s/.*wifi_password.*=.*\$/wifi_password=${WIFI_PASSWORD}/" "${boot}/occidentalis.txt"
   fi
 fi
 
