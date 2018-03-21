@@ -46,6 +46,8 @@ teardown() {
   assert_output_contains "name: pirate"
   assert_output_contains "plain_text_passwd: hypriot"
 
+  [[ ! -e "/tmp/boot/user-data-e" ]]
+
   [[ -e "/tmp/boot/meta-data" ]]
   [[ ! -s "/tmp/boot/meta-data" ]]
 }
