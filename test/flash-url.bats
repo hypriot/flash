@@ -19,7 +19,7 @@ teardown() {
   run cat /tmp/boot/user-data
   assert_success
   assert_output_contains "hostname: black-pearl"
-  [[ -e "/tmp/boot/meta-data" ]]
+  assert [ -e "/tmp/boot/meta-data" ]
 }
 
 @test "flash with url to img.xz works" {

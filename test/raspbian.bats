@@ -25,7 +25,7 @@ teardown() {
   assert_success
   assert_output_contains "dtparam=audio=on"
 
-  [[ ! -f "/tmp/boot/device-init.yaml" ]]
-  [[ ! -f "/tmp/boot/user-data" ]]
-  [[ ! -f "/tmp/boot/meta-data" ]]
+  assert [ ! -f "/tmp/boot/device-init.yaml" ]
+  assert [ ! -f "/tmp/boot/user-data" ]
+  assert [ ! -f "/tmp/boot/meta-data" ]
 }
