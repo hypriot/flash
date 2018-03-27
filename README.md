@@ -2,10 +2,12 @@
 
 [![CircleCI](https://circleci.com/gh/hypriot/flash.svg?style=svg)](https://circleci.com/gh/hypriot/flash)
 [![Build Status](https://travis-ci.org/hypriot/flash.svg?branch=master)](https://travis-ci.org/hypriot/flash)
+[![Release](https://img.shields.io/github/release/hypriot/flash.svg)](https://github.com/hypriot/flash#installation)
+[![Stars](	https://img.shields.io/github/stars/hypriot/flash.svg?style=social&label=Stars)](https://github.com/hypriot/flash#installation)
 
 Command line script to flash SD card images of any kind.
 
-Note that for some devices (e.g. Raspberry Pi), at the end of the flashing process the tool tries to customize the SD card e.g. it configures a hostname. If this customization is not supported, just ignore the error thrown at this point.
+Note that for some devices (e.g. Raspberry Pi), at the end of the flashing process the tool tries to customize the SD card e.g. it configures a hostname or WiFi. And with a cloud-init enabled image you can do much more like adding users, SSH keys etc.
 
 The typical workflow looks like this:
 
