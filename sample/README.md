@@ -1,4 +1,4 @@
-# flash sample configs
+# flash sample config files
 
 Here you can find a collection of sample configurations to improve your
 first-boot experience using HypriotOS.
@@ -11,6 +11,7 @@ Setup WiFi for your Raspberry Pi Zero or Pi 3 / 3 B+.
 
 * [wifi-user-data.yml](./wifi-user-data.yml)
   * insert WiFi SSID
+  * adjust your country code
 
 ## SSH public key authentication
 
@@ -33,5 +34,6 @@ Run a container as a service automatically.
 * [rainbow.yml](./rainbow.yml)
   * insert SSH public key
   * insert WiFi SSID and preshared key
+  * adjust your country code
   * attach Pimoroni Blinkt
   * flash, boot your Pi 3/0 - enjoy!
