@@ -1,0 +1,16 @@
+#cloud-config
+
+hostname: pubkey
+manage_etc_hosts: true
+apt_preserve_sources_list: true
+
+users:
+  - name: foo                # use any user name you like
+    primary-group: users
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users,docker,adm,dialout,audio,plugdev,netdev,video
+    ssh-import-id: None
+    lock_passwd: true
+    ssh-authorized-keys:
+      - ssh-rsa AAAA....NN   # insert your SSH public key ~/.ssh/id_rsa.pub here
