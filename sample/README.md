@@ -3,7 +3,7 @@
 Here you can find a collection of sample configurations to improve your
 first-boot experience using HypriotOS.
 
-Beginning with HypriotOS 1.7.0 we have switched to [cloud-init]() which gives you much more power to customize your device automatically during the first initial boot.
+Beginning with HypriotOS 1.7.0 we have switched to [cloud-init](http://cloudinit.readthedocs.io/en/0.7.9/) which gives you much more power to customize your device automatically during the first initial boot.
 
 ## WiFi
 
