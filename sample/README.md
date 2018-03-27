@@ -1,9 +1,13 @@
-# flash sample config files
+# cloud-init sample config files
 
 Here you can find a collection of sample configurations to improve your
 first-boot experience using HypriotOS.
 
 Beginning with HypriotOS 1.7.0 we have switched to [cloud-init](http://cloudinit.readthedocs.io/en/0.7.9/) which gives you much more power to customize your device automatically during the first initial boot.
+
+You can either use our `flash` tool with option `-u` or `--userdata` to specify the YAML file. The flash tool will copy it to the SD card right after flashing.
+
+Otherwise copy the YAML file to the boot partition of the SD card to the `/boot/user-data` file.
 
 ## WiFi
 
