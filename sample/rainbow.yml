@@ -1,0 +1,47 @@
+#cloud-config
+
+hostname: rainbow
+manage_etc_hosts: true
+apt_preserve_sources_list: true
+
+users:
+  - name: pirate
+    primary-group: users
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users,docker,adm,dialout,audio,plugdev,netdev,video
+    ssh-import-id: None
+    lock_passwd: true
+    ssh-authorized-keys:
+      - ssh-rsa AAAA....NN   # insert your SSH public key ~/.ssh/id_rsa.pub here
+
+package_upgrade: false
+
+write_files:
+  - content: |
+      allow-hotplug wlan0
+      iface wlan0 inet dhcp
+      wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+      iface default inet dhcp
+    path: /etc/network/interfaces.d/wlan0
+  - content: |
+      country=de
+      ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+      update_config=1
+      network={
+      ssid="YOUR-SSID"           # insert your SSID here
+      psk="YOUR-PRESHARED-KEY"   # insert your PSK here
+      proto=RSN
+      key_mgmt=WPA-PSK
+      pairwise=CCMP
+      auth_alg=OPEN
+      }
+    path: /etc/wpa_supplicant/wpa_supplicant.conf
+
+# These commands will be ran once on first boot only
+runcmd:
+  - 'systemctl restart avahi-daemon'
+  - 'ifup wlan0'
+  - 'sleep 10'
+  - 'docker swarm init'
+  - 'docker service create --name rainbow --mount type=bind,src=/sys,dst=/sys  sealsystems/rainbow:1.0.0'
