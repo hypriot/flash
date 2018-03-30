@@ -9,6 +9,16 @@ You can either use our `flash` tool with option `-u` or `--userdata` to specify 
 
 Otherwise copy the YAML file to the boot partition of the SD card to the `/boot/user-data` file.
 
+Quick installation:
+
+```
+$ flash -u your-cloud-init.yml https://github.com/hypriot/image-builder-rpi/releases/download/v1.8.0/hypriotos-rpi-v1.8.0.img.zip
+$ ssh pirate@black-pearl.local
+```
+
+login with username "pirate", password "hypriot"
+
+
 ## WiFi
 
 Setup WiFi for your Raspberry Pi Zero or Pi 3 / 3 B+.
