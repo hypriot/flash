@@ -147,13 +147,13 @@ case "${OSTYPE}" in
     # return _RET: the name of the device to use
     autodetect_device() {
       set +e
-      _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+      _RET=$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
 
       if [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; then
         echo "No SD card found. Please insert SD card, I'll wait for it..."
         while [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; do
           sleep 1
-          _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+          _RET=$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
         done
       fi
       set -e
@@ -555,8 +555,8 @@ while true; do
       # shellcheck disable=SC2162
       read -p "Please pick your device: "
       disk="${REPLY}"
-      [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
     fi
+    [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
   fi
   if [[ -z "${FORCE}" ]]; then
     while true; do
