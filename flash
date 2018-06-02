@@ -321,7 +321,7 @@ case "${OSTYPE}" in
     #
     # @return _RET the name of the device to use
     autodetect_device() {
-      _RET=$(lsblk -n -o NAME -d | grep mmcblk || true)
+      _RET=$(lsblk -p -n -o NAME -d | grep mmcblk || true)
     }
 
     # Show in the standard output the devices that are a likely
