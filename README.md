@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/hypriot/flash.svg?style=svg)](https://circleci.com/gh/hypriot/flash)
 [![Build Status](https://travis-ci.org/hypriot/flash.svg?branch=master)](https://travis-ci.org/hypriot/flash)
-[![Release](https://img.shields.io/github/release/hypriot/flash.svg)](https://github.com/hypriot/flash#installation)
+[![Release](https://img.shields.io/github/release/hypriot/flash.svg)](https://github.com/hypriot/flash/releases)
 [![Stars](	https://img.shields.io/github/stars/hypriot/flash.svg?style=social&label=Stars)](https://github.com/hypriot/flash#installation)
 
 Command line script to flash SD card images of any kind.
@@ -40,7 +40,7 @@ At the moment only Mac OS X and Linux is supported.
 Download the appropriate version for Linux or Mac with this command
 
 ```bash
-curl -LO https://github.com/hypriot/flash/releases/download/2.1.0/flash
+curl -LO https://github.com/hypriot/flash/releases/download/2.1.1/flash
 chmod +x flash
 sudo mv flash /usr/local/bin/flash
 ```
