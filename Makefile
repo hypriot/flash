@@ -10,7 +10,7 @@ TMP_DIR ?= "/tmp/hypriot-flash"
 
 test: build
 	mkdir -p $(TMP_DIR)
-	docker run --privileged -ti -v $(shell pwd):/code -v $(TMP_DIR):/tmp flash npm test
+	docker run --privileged -ti -v $(shell pwd):/code -v $(TMP_DIR):/tmp -e CIRCLE_TAG flash npm test
 	rm -rf $(TMP_DIR)
 
 shellcheck:

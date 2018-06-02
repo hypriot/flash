@@ -13,6 +13,12 @@ error()
   exit "$2"
 }
 
+version()
+{
+  echo "dirty"
+  exit 0
+}
+
 usage()
 {
   cat << EOF
@@ -62,7 +68,7 @@ do
   delim=""
   case "${arg}" in
     --help) args="${args}-h ";;
-    --verbose) args="${args}-v ";;
+    --version) args="${args}-v ";;
     --config) args="${args}-c ";;
     --hostname) args="${args}-n ";;
     --ssid) args="${args}-s ";;
@@ -81,9 +87,10 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":hc:n:s:p:C:l:d:fu:m:" opt; do
+while getopts ":h:vc:n:s:p:C:l:d:fu:m:" opt; do
   case $opt in
     h)  usage ;;
+    v)  version ;;
     c)  CONFIG_FILE=$OPTARG ;;
     C)  BOOT_CONF=$OPTARG ;;
     n)  SD_HOSTNAME=$OPTARG ;;
