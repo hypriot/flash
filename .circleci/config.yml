@@ -12,5 +12,61 @@ jobs:
           command: make shellcheck
 
       - run:
+          name: Insert version
+          command: |
+            if [ ! -z "$CIRCLE_TAG" ]; then
+              sed -i "s/dirty/$CIRCLE_TAG/g" flash
+            fi
+
+      - run:
+          name: Show version
+          command: ./flash --version
+
+      - run:
           name: Run BATS tests
           command: make test
+
+  deploy:
+    machine: true
+
+    steps:
+      - checkout
+
+      - run:
+          name: Insert version
+          command: sed -i "s/dirty/$CIRCLE_TAG/g" flash
+
+      - run:
+          name: Show version
+          command: ./flash --version
+
+      - run:
+          name: Run BATS tests with version
+          command: make test
+
+      - run:
+          name: Deploy
+          command: |
+            curl -sSL https://github.com/tcnksm/ghr/releases/download/v0.5.4/ghr_v0.5.4_linux_amd64.zip -o ghr.zip
+            unzip ghr.zip
+            mkdir output
+            sha256sum flash > flash.sha256
+            cp flash* output
+            ./ghr -u hypriot $CIRCLE_TAG output/
+
+workflows:
+  version: 2
+  build-n-deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - deploy:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^.*/
+            branches:
+              ignore: /.*/

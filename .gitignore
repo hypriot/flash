@@ -8,3 +8,5 @@ image*
 *.gz
 loo
 *.dmg
+wifi.yml
+flash-wifi.sh
