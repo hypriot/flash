@@ -40,7 +40,7 @@ At the moment only Mac OS X and Linux is supported.
 Download the appropriate version for Linux or Mac with this command
 
 ```bash
-curl -O https://raw.githubusercontent.com/hypriot/flash/master/flash
+curl -O https://github.com/hypriot/flash/releases/download/2.1.0/flash
 chmod +x flash
 sudo mv flash /usr/local/bin/flash
 ```
