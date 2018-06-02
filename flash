@@ -599,7 +599,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   else
     echo "No 'pv' command found, so no progress available."
     echo "Press CTRL+T if you want to see the current info of dd command."
-    sudo dd bs=1M "if=${image}" "of=${rawdisk}"
+    sudo dd bs=$bs_size "if=${image}" "of=${rawdisk}"
   fi
 
   wait_for_disk "${disk}"
