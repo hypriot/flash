@@ -148,6 +148,18 @@ case "${OSTYPE}" in
       true
     }
 
+    validate_yaml() {
+      set +e
+      _RET=$(ruby -e "require 'yaml';YAML.load_file('$1')" 2>&1)
+      if [ $? -eq 0 ]; then
+        set -e
+        return 0
+      fi
+      echo "File $1 is not a valid YAML file!"
+      echo "$_RET" | grep -v "from "
+      set -e
+      false
+    }
     # Try to identify the most likely device that the user will use to
     # write an image to.
     #
@@ -316,6 +328,11 @@ case "${OSTYPE}" in
       fi
     }
 
+    validate_yaml() {
+      ## NO-OP in Linux
+      true
+    }
+
     # Try to identify the most likely device that the user will use to
     # write an image to.
     #
@@ -475,6 +492,7 @@ if [ ! -z "${USER_DATA}" ]; then
     echo "Cloud-init file ${USER_DATA} not found!"
     exit 10
   fi
+  validate_yaml "${USER_DATA}"
 fi
 
 if [ ! -z "${META_DATA}" ]; then
