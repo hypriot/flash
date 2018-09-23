@@ -1,4 +1,5 @@
 load test_helper
+export OS=$(uname -s)
 
 setup() {
   if [ ! -f cloud-init.img ]; then
@@ -15,6 +16,15 @@ teardown() {
   umount_sd_boot /tmp/boot
   rm -f $img
   unstub_diskutil
+}
+
+@test "cloud-init: flash aborts if YAML is not valid" {
+  if [ "${OS}" == "Darwin" ]; then
+    run ./flash -f -d $img -u test/resources/bad.yml cloud-init.img
+    assert_failure
+
+    assert_output_contains "is not a valid YAML file"
+  fi
 }
 
 @test "cloud-init: flash works" {

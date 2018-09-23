@@ -1,0 +1,21 @@
+#cloud-config
+hostname: good
+manage_etc_hosts: true
+users:
+  - name: other
+    primary-group: users
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users,docker,adm,dialout,audio,plugdev,netdev,video
+    ssh-import-id: None
+    lock_passwd: true
+    ssh-authorized-keys:
+      - ssh-rsa AAAAxxx testkey
+write_files:
+  - content: |
+    {
+    "registry-mirrors": ["https://registry.docker-cn.com"]
+    }
+    path: /etc/docker/daemon.json
+runcmd:
+ - [ systemctl, restart, avahi-daemon ]
