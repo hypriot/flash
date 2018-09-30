@@ -140,7 +140,7 @@ case "${OSTYPE}" in
   darwin*)
     alias grep="grep --color=never"
     size_opt="-f %z"
-    bs_size=1m
+    bs_size=1M
 
     # Check that the system has all the needed binaries/requirements in place
     check_requirements() {
