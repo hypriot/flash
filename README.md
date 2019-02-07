@@ -126,7 +126,7 @@ users:
 package_upgrade: false
 ```
 
-Please have a look at the [`sample`](sample/) folder, our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
+Please have a look at the [`sample`](sample/) folder, our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](https://www.raspberrypi.org/documentation/configuration/config-txt/README.md)
 how to do more things like using SSH keys, running additional commands etc.
 
 ### config.txt
