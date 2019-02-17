@@ -38,6 +38,7 @@ OPTIONS:
   --force|-f      Force flash without security prompt (for automation)
   --userdata|-u   Copy this cloud-init file to /boot/user-data
   --metadata|-m   Copy this cloud-init file to /boot/meta-data
+  --file|-F       Copy this file to /boot
 
 If no image is specified, the script will try to configure an existing
 image. This is useful to try several configuration without the need to
@@ -79,6 +80,7 @@ do
     --force) args="${args}-f ";;
     --userdata) args="${args}-u ";;
     --metadata) args="${args}-m ";;
+    --file) args="${args}-F ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
       args="${args}${delim}${arg}${delim} ";;
@@ -87,7 +89,7 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":h:vc:n:s:p:C:l:d:fu:m:" opt; do
+while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
   case $opt in
     h)  usage ;;
     v)  version ;;
@@ -101,6 +103,7 @@ while getopts ":h:vc:n:s:p:C:l:d:fu:m:" opt; do
     f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
+    F)  FILE=$OPTARG ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -501,6 +504,13 @@ if [ -n "${META_DATA}" ]; then
   fi
 fi
 
+if [ -n "${FILE}" ]; then
+  if [ ! -f "${FILE}" ]; then
+    echo "File ${FILE} not found!"
+    exit 10
+  fi
+fi
+
 if [ -n "${BOOT_CONF}" ]; then
   if [ ! -f "${BOOT_CONF}" ]; then
     echo "File ${BOOT_CONF} not found!"
@@ -659,6 +669,11 @@ mount_boot_disk "${disk}" "${boot}"
   if [ -f "${META_DATA}" ]; then
     echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
     cp "${META_DATA}" "${boot}/meta-data"
+  fi
+
+  if [ -f "${FILE}" ]; then
+    echo "Copying file ${FILE} to ${boot}/ ..."
+    cp "${FILE}" "${boot}/"
   fi
 
 

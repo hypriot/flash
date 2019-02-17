@@ -28,6 +28,7 @@ This script can
 * copy an optional cloud-init `user-data` and `meta-data` file into the boot partition of the SD image
 * copy an optional `config.txt` file into the boot partition of the SD image (eg. to enable onboard WiFi)
 * copy an optional `device-init.yaml` or `occidentalis.txt` file into the boot partition of the SD image (for older HypriotOS versions)
+* copy an optional custom file into the boot partition of the SD image
 * optional set the hostname of this SD image
 * optional set the WiFi settings as well
 * play a little sound after flashing
@@ -89,6 +90,7 @@ OPTIONS:
    --force|-f     Force flash without security prompt (for automation)
    --userdata|-u  Copy this cloud-init config file to /boot/user-data
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
+   --file|-F      Copy this custom file to /boot
 ```
 
 If no image is specified, the script will try to configure an existing
