@@ -126,7 +126,7 @@ users:
 package_upgrade: false
 ```
 
-Please have a look at the [`sample`](sample/) folder, our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](https://www.raspberrypi.org/documentation/configuration/config-txt/README.md)
+Please have a look at the [`sample`](sample/) folder, our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
 how to do more things like using SSH keys, running additional commands etc.
 
 ### config.txt
@@ -135,7 +135,7 @@ The option `--bootconf` can be used to copy a `config.txt` into the SD image
 before it is unplugged.
 
 With this option it is possible to change some memory, camera, video settings
-etc. See the [config.txt documentation](https://www.raspberrypi.org/documentation/configuration/config-txt.md)
+etc. See the [config.txt documentation](https://www.raspberrypi.org/documentation/configuration/config-txt/README.md)
 at raspberrypi.org for more details.
 
 The boot config file config.txt has name/value pairs such as:
