@@ -135,7 +135,7 @@ The option `--bootconf` can be used to copy a `config.txt` into the SD image
 before it is unplugged.
 
 With this option it is possible to change some memory, camera, video settings
-etc. See the [config.txt documentation](https://www.raspberrypi.org/documentation/configuration/config-txt.md)
+etc. See the [config.txt documentation](https://www.raspberrypi.org/documentation/configuration/config-txt/README.md)
 at raspberrypi.org for more details.
 
 The boot config file config.txt has name/value pairs such as:
