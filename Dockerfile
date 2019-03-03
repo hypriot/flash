@@ -4,7 +4,7 @@ COPY package.json .
 RUN npm install && \
     mv node_modules ..
 
-RUN apt-get update && apt-get install -y sudo pv curl unzip shellcheck
+RUN apt-get update && apt-get install -y sudo pv curl unzip shellcheck udev
 RUN useradd user && \
     mkdir -p /home/user && \
     chown user:users /home/user && \
