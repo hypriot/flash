@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+689#!/usr/bin/env bash
 # Flash Raspberry Pi SD card images on your PC or Mac
 # Stefan Scherer - scherer_stefan@icloud.com
 #
@@ -485,9 +485,9 @@ esac
 add_datetime() {
   # args: $1: full path name of `user-data` file on ssd
   # get current UTC date/time
-  current_datetime=`date -u`
+  current_datetime=$(date -u)
 
-  ed $1 <<EOF
+  ed "$1" <<EOF
   /^runcmd:/
   a
   - date -s "$current_datetime"
@@ -680,13 +680,13 @@ mount_boot_disk "${disk}" "${boot}"
     echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
     cp "${USER_DATA}" "${boot}/user-data"
     # Hack to set date in a reasonable range to make apt-get update work
-    if ! grep -q "^runcmd:" ${boot}/user-data; then
+    if ! grep -q "^runcmd:" "${boot}"/user-data; then
       # USER_DATA doesn't have a runcmd section, add it
-      echo "" >> ${boot}/user-data
-      echo "runcmd:" >> ${boot}/user-data
+      echo "" >> "${boot}"/user-data
+      echo "runcmd:" >> "${boot}"/user-data
     fi
     # Set date/time as first command in `runcmd` section
-    add_datetime ${boot}/user-data
+    add_datetime "${boot}"/user-data
   fi
 
   if [ -f "${META_DATA}" ]; then
