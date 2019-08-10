@@ -488,9 +488,10 @@ add_datetime() {
   current_datetime=$(date -u)
 
   ed "$1" <<EOF
-  /^runcmd:/
+  /^bootcmd:.*/
   a
-  - date -s "$current_datetime"
+  - [ cloud-init-per, once, sdate_msg, echo, "Setting initial date/time to: $current_datetime" ]
+  - [ cloud-init-per, once, sdate, date, -s, "$current_datetime" ]
 .
 w
 q
@@ -680,12 +681,12 @@ mount_boot_disk "${disk}" "${boot}"
     echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
     cp "${USER_DATA}" "${boot}/user-data"
     # Hack to set date in a reasonable range to make apt-get update work
-    if ! grep -q "^runcmd:" "${boot}"/user-data; then
-      # USER_DATA doesn't have a runcmd section, add it
+    if ! grep -q "^bootcmd:.*" "${boot}"/user-data; then
+      # USER_DATA doesn't have a bootcmd section, add it
       echo "" >> "${boot}"/user-data
-      echo "runcmd:" >> "${boot}"/user-data
+      echo "bootcmd:" >> "${boot}"/user-data
     fi
-    # Set date/time as first command in `runcmd` section
+    # Set date/time cloud-init `bootcmd` section
     add_datetime "${boot}"/user-data
   fi
 
