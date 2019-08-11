@@ -487,15 +487,12 @@ add_datetime() {
   # get current UTC date/time
   current_datetime=$(date -u)
 
-  ed "$1" <<EOF
-  /^bootcmd:.*/
-  a
-  - [ cloud-init-per, once, sdate_msg, echo, "Setting initial date/time to: $current_datetime" ]
-  - [ cloud-init-per, once, sdate, date, -s, "$current_datetime" ]
-.
-w
-q
-EOF
+  /usr/bin/sed -i .bak -e \
+  "/^bootcmd/a\\
+  \ \ - [ cloud-init-per, once, sdate_msg, echo, \"Setting initial date/time to: $current_datetime\" ]" \
+  -e "/^bootcmd/a\\
+  \ \ - [ cloud-init-per, once, sdate, date, -s, \"$current_datetime\" ]" $1 &&
+  rm $1.bak
 }
 
 if endswith Microsoft "$(uname -r)"; then
