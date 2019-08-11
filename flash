@@ -491,8 +491,8 @@ add_datetime() {
   "/^bootcmd/a\\
   \ \ - [ cloud-init-per, once, sdate_msg, echo, \"Setting initial date/time to: $current_datetime\" ]" \
   -e "/^bootcmd/a\\
-  \ \ - [ cloud-init-per, once, sdate, date, -s, \"$current_datetime\" ]" $1 &&
-  rm $1.bak
+  \ \ - [ cloud-init-per, once, sdate, date, -s, \"$current_datetime\" ]" "$1" &&
+  rm "$1".bak
 }
 
 if endswith Microsoft "$(uname -r)"; then
