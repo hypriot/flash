@@ -485,7 +485,7 @@ esac
 add_datetime() {
   # args: $1: full path name of `user-data` file on ssd
   # get current UTC date/time
-  current_datetime=$(date -u)
+  current_datetime=$(LANG=C date -u)
 
   sed_i -e \
   "/^bootcmd/a\\
