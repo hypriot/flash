@@ -482,8 +482,13 @@ case "${OSTYPE}" in
     ;;
 esac
 
+if endswith microsoft-standard "$(uname -r)"; then
+  echo This script does not work in WSL2.
+  exit 11
+fi
+
 if endswith Microsoft "$(uname -r)"; then
-  echo This script does not work in WSL.
+  echo This script does not work in WSL1.
   exit 11
 fi
 
