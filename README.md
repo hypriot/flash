@@ -13,7 +13,7 @@ The typical workflow looks like this:
 
 [![asciicast](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w.png)](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w)
 
-1. Run `flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip`
+1. Run `flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.11.5/hypriotos-rpi-v1.11.5.img.zip`
 2. Insert SD card to your notebook
 3. Press RETURN
 4. Eject SD card and insert it to your Raspberry Pi - done!
@@ -171,7 +171,7 @@ If you don't want to set any wifi settings, comment out or remove the wlan0, ssi
 ### Flash a compressed SD image from the internet
 
 ```bash
-flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.7.1/hypriotos-rpi-v1.7.1.img.zip
+flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.11.5/hypriotos-rpi-v1.11.5.img.zip
 ```
 
 ### Flash and change the hostname
@@ -194,7 +194,7 @@ ssh pi@mypi.local
 The options `--userdata` and `--bootconf` must be used to disable UART and enable onboard WiFi for Raspberry Pi 3 and Pi 0. For external WiFi sticks you do not need to specify the `-bootconf` option.
 
 ```
-flash --userdata sample/wlan-user-data.yaml --bootconf sample/no-uart-config.txt hypriotos-rpi-v1.7.1.img
+flash --userdata sample/wlan-user-data.yaml --bootconf sample/no-uart-config.txt hypriotos-rpi-v1.11.5.img
 ```
 
 ### Automating flash
@@ -202,7 +202,7 @@ flash --userdata sample/wlan-user-data.yaml --bootconf sample/no-uart-config.txt
 For non-interactive usage, you can predefine the user input in the flash command with the `-d` and `-f` options:
 
 ```
-flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.7.1.img
+flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.11.5.img
 ```
 
 ## Development
