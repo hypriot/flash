@@ -681,7 +681,6 @@ mount_boot_disk "${disk}" "${boot}"
     cp "${FILE}" "${boot}/"
   fi
 
-
 if [ -f "${boot}/device-init.yaml" ]; then
   echo "Setting device-init"
   if [ -n "${SD_HOSTNAME}" ]; then
@@ -702,6 +701,11 @@ if [ -f "${boot}/device-init.yaml" ]; then
     echo "  Set Cluster-Lab/run_on_boot=${CLUSTERLAB}"
     sed_i -e "s/.*run_on_boot.*\$/    run_on_boot: \"${CLUSTERLAB}\"/" "${boot}/device-init.yaml"
   fi
+fi
+
+# set fake-hwclock
+if [ -f "${boot}/fake-hwclock.data" ]; then
+  TZ=UTC date '+%Y-%m-%d %H:%M:%S' > "${boot}/fake-hwclock.data"
 fi
 
  # cloud-init
