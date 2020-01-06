@@ -705,7 +705,7 @@ fi
 
 # set fake-hwclock
 if [ -f "${boot}/fake-hwclock.data" ]; then
-  date --utc --rfc-3339=seconds |cut -d+ -f1 > "${boot}/fake-hwclock.data"
+  TZ=UTC date '+%Y-%m-%d %H:%M:%S' > "${boot}/fake-hwclock.data"
 fi
 
  # cloud-init
