@@ -13,7 +13,7 @@ The typical workflow looks like this:
 
 [![asciicast](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w.png)](https://asciinema.org/a/4k72pounxxybtix84ecl4b69w)
 
-1. Run `flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.11.5/hypriotos-rpi-v1.11.5.img.zip`
+1. Run `flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.12.0/hypriotos-rpi-v1.12.0.img.zip`
 2. Insert SD card to your notebook
 3. Press RETURN
 4. Eject SD card and insert it to your Raspberry Pi - done!
@@ -41,7 +41,7 @@ At the moment only Mac OS X and Linux is supported.
 Download the appropriate version for Linux or Mac with this command
 
 ```bash
-curl -LO https://github.com/hypriot/flash/releases/download/2.4.0/flash
+curl -LO https://github.com/hypriot/flash/releases/download/2.5.0/flash
 chmod +x flash
 sudo mv flash /usr/local/bin/flash
 ```
@@ -92,10 +92,6 @@ OPTIONS:
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
    --file|-F      Copy this custom file to /boot
 ```
-
-If no image is specified, the script will try to configure an existing
-image. This is useful to try several configuration without the need to
-rewrite the image every time.
 
 ## Configuration
 
@@ -166,12 +162,16 @@ wifi:
 
 If you don't want to set any wifi settings, comment out or remove the wlan0, ssid and password.
 
+## fake-hwclock.data
+
+HypriotOS 1.12.0 and higher has the `/etc/fake-hwclock.data` file symlinked to the boot partition. Flash tool updates this timestamp with the current time (UTC timezone). This fixes problems running commands that communicate with the internet with a wrong initial date on first boot.
+
 ## Use cases
 
 ### Flash a compressed SD image from the internet
 
 ```bash
-flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.11.5/hypriotos-rpi-v1.11.5.img.zip
+flash https://github.com/hypriot/image-builder-rpi/releases/download/v1.12.0/hypriotos-rpi-v1.12.0.img.zip
 ```
 
 ### Flash and change the hostname
@@ -194,7 +194,7 @@ ssh pi@mypi.local
 The options `--userdata` and `--bootconf` must be used to disable UART and enable onboard WiFi for Raspberry Pi 3 and Pi 0. For external WiFi sticks you do not need to specify the `-bootconf` option.
 
 ```
-flash --userdata sample/wlan-user-data.yaml --bootconf sample/no-uart-config.txt hypriotos-rpi-v1.11.5.img
+flash --userdata sample/wlan-user-data.yaml --bootconf sample/no-uart-config.txt hypriotos-rpi-v1.12.0.img
 ```
 
 ### Automating flash
@@ -202,7 +202,7 @@ flash --userdata sample/wlan-user-data.yaml --bootconf sample/no-uart-config.txt
 For non-interactive usage, you can predefine the user input in the flash command with the `-d` and `-f` options:
 
 ```
-flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.11.5.img
+flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.12.0.img
 ```
 
 ## Development
@@ -261,7 +261,7 @@ the `Vagrantfile`.
 vagrant up --provider virtualbox
 vagrant ssh
 cd /vagrant
-./flash hypriotos-rpi-v1.7.1.img.zip
+./flash hypriotos-rpi-v1.12.0.img.zip
 ```
 
 ## Buy us a beer!
@@ -269,4 +269,3 @@ cd /vagrant
 This FLOSS software is funded by donations only. Please support us to maintain and further improve it!
 
 <a href="https://liberapay.com/Hypriot/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
-
