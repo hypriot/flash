@@ -62,6 +62,26 @@ teardown() {
   assert [ ! -s /tmp/boot/meta-data ]
 }
 
+@test "cloud-init: flash --ssid sets ssid" {
+  run ./flash -f -d $img --ssid NEWSSID cloud-init.img
+  assert_success
+  assert_output_contains Finished.
+
+  mount_sd_boot $img /tmp/boot
+  run cat /tmp/boot/user-data
+  assert_output_contains 'ssid="NEWSSID"'
+}
+
+@test "cloud-init: flash --password sets psk" {
+  run ./flash -f -d $img --password NEWPSK cloud-init.img
+  assert_success
+  assert_output_contains Finished.
+
+  mount_sd_boot $img /tmp/boot
+  run cat /tmp/boot/user-data
+  assert_output_contains 'psk="NEWPSK"'
+}
+
 @test "cloud-init: flash --config does not replace user-data" {
   run ./flash -f -d $img --config test/resources/good.yml cloud-init.img
   assert_success

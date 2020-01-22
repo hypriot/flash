@@ -714,6 +714,14 @@ fi
       echo "Set hostname=${SD_HOSTNAME}"
       sed_i -e "s/.*hostname:.*\$/hostname: ${SD_HOSTNAME}/" "${boot}/user-data"
     fi
+    if [ -n "${WIFI_SSID}" ]; then
+      echo "  Set ssid=${WIFI_SSID}"
+      sed_i -e "s/.*ssid=.*\$/      ssid=\"${WIFI_SSID}\"/" "${boot}/user-data"
+    fi
+    if [ -n "${WIFI_PASSWORD}" ]; then
+      echo "  Set psk=${WIFI_PASSWORD}"
+      sed_i -e "s/.*psk=.*\$/      psk=\"${WIFI_PASSWORD}\"/" "${boot}/user-data"
+    fi
 
     if [ ! -f "${boot}/meta-data" ]; then
       echo "Creating empty meta-data"
