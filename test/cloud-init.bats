@@ -62,24 +62,24 @@ teardown() {
   assert [ ! -s /tmp/boot/meta-data ]
 }
 
-@test "cloud-init: flash --ssid sets ssid" {
+@test "cloud-init: flash --ssid does NOT set ssid as it's COMMENTED in default image" {
   run ./flash -f -d $img --ssid NEWSSID cloud-init.img
   assert_success
   assert_output_contains Finished.
 
   mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
-  assert_output_contains 'ssid="NEWSSID"'
+  refute_output_contains 'ssid="NEWSSID"'
 }
 
-@test "cloud-init: flash --password sets psk" {
+@test "cloud-init: flash --password does NOT set psk as it's COMMENTED in default image" {
   run ./flash -f -d $img --password NEWPSK cloud-init.img
   assert_success
   assert_output_contains Finished.
 
   mount_sd_boot $img /tmp/boot
   run cat /tmp/boot/user-data
-  assert_output_contains 'psk="NEWPSK"'
+  refute_output_contains 'psk="NEWPSK"'
 }
 
 @test "cloud-init: flash --ssid still sets ssid when user-data also specified" {
@@ -102,8 +102,8 @@ teardown() {
   assert_output_contains 'psk="NEWPSK"'
 }
 
-@test "cloud-init: flash --ssid does NOT set ssid if COMMENTED" {
-  run ./flash -f -d $img -u test/resources/commented-wifi-user-data.yml --ssid NEWSSID cloud-init.img
+@test "cloud-init: flash --ssid does NOT set ssid if COMMENTED when user-data also specified" {
+  run ./flash -f -d $img -u test/resources/wifi-commented-user-data.yml --ssid NEWSSID cloud-init.img
   assert_success
   assert_output_contains Finished.
 
@@ -112,8 +112,8 @@ teardown() {
   refute_output_contains 'ssid="NEWSSID"'
 }
 
-@test "cloud-init: flash --password does NOT set psk if COMMENTED" {
-  run ./flash -f -d $img -u test/resources/commented-wifi-user-data.yml --password NEWPSK cloud-init.img
+@test "cloud-init: flash --password does NOT set psk if COMMENTED when user-data also specified" {
+  run ./flash -f -d $img -u test/resources/wifi-commented-user-data.yml --password NEWPSK cloud-init.img
   assert_success
   assert_output_contains Finished.
 
