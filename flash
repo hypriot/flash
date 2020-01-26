@@ -716,11 +716,11 @@ fi
     fi
     if [ -n "${WIFI_SSID}" ]; then
       echo "  Set ssid=${WIFI_SSID}"
-      sed_i -e "s/.*ssid=.*\$/      ssid=\"${WIFI_SSID}\"/" "${boot}/user-data"
+      sed_i -e "^[^#]s/.*ssid=.*\$/      ssid=\"${WIFI_SSID}\"/" "${boot}/user-data"
     fi
     if [ -n "${WIFI_PASSWORD}" ]; then
       echo "  Set psk=${WIFI_PASSWORD}"
-      sed_i -e "s/.*psk=.*\$/      psk=\"${WIFI_PASSWORD}\"/" "${boot}/user-data"
+      sed_i -e "^[^#]s/.*psk=.*\$/      psk=\"${WIFI_PASSWORD}\"/" "${boot}/user-data"
     fi
 
     if [ ! -f "${boot}/meta-data" ]; then
