@@ -738,7 +738,7 @@ if [ -f "${boot}/occidentalis.txt" ]; then
 fi
 
 echo "Unmounting ${disk} ..."
-sleep 1
+sleep 5
 
 set +e
 detach "${disk}"
