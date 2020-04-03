@@ -494,7 +494,23 @@ fi
 
 check_requirements
 
+http_download() {
+  local uri="${1}"
+  local tmp="/tmp/${2}"
+
+  if beginswith http:// "${uri}" || beginswith https:// "${uri}"; then
+    command -v curl 2>/dev/null || error "Error: curl not found. Aborting" 1
+    echo "Downloading ${uri} ..."
+    curl -L --fail -o "${tmp}" "${uri}"
+    _RET="${tmp}"
+  else
+    _RET="${uri}"
+  fi
+}
+
 if [ -n "${USER_DATA}" ]; then
+  http_download "$USER_DATA" "flash.user_data.yaml"
+  USER_DATA="$_RET"
   if [ ! -f "${USER_DATA}" ]; then
     echo "Cloud-init file ${USER_DATA} not found!"
     exit 10
@@ -503,6 +519,8 @@ if [ -n "${USER_DATA}" ]; then
 fi
 
 if [ -n "${META_DATA}" ]; then
+  http_download "$META_DATA" "flash.meta_data.yaml"
+  META_DATA="$_RET"
   if [ ! -f "${META_DATA}" ]; then
     echo "Cloud-init file ${META_DATA} not found!"
     exit 10
@@ -510,6 +528,8 @@ if [ -n "${META_DATA}" ]; then
 fi
 
 if [ -n "${FILE}" ]; then
+  http_download "$FILE" "flash.file"
+  FILE="$_RET"
   if [ ! -f "${FILE}" ]; then
     echo "File ${FILE} not found!"
     exit 10
@@ -517,6 +537,8 @@ if [ -n "${FILE}" ]; then
 fi
 
 if [ -n "${BOOT_CONF}" ]; then
+  http_download "$BOOT_CONF" "flash.config.txt"
+  BOOT_CONF="$_RET"
   if [ ! -f "${BOOT_CONF}" ]; then
     echo "File ${BOOT_CONF} not found!"
     exit 10
@@ -524,6 +546,8 @@ if [ -n "${BOOT_CONF}" ]; then
 fi
 
 if [ -n "${CONFIG_FILE}" ]; then
+  http_download "$CONFIG_FILE" "flash.device_init.yaml"
+  CONFIG_FILE="$_RET"
   if [ ! -f "${CONFIG_FILE}" ]; then
     echo "File ${CONFIG_FILE} not found!"
     exit 10
