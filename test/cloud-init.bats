@@ -202,7 +202,7 @@ teardown() {
 }
 
 @test "cloud-init: flash --metadata can be downloaded" {
-  run ./flash -f -d $img --userdata https://raw.githubusercontent.com/hypriot/flash/master/test/resources/meta.yml cloud-init.img
+  run ./flash -f -d $img --userdata test/resources/good.yml --metadata https://raw.githubusercontent.com/hypriot/flash/master/test/resources/meta.yml cloud-init.img
   assert_success
   assert_output_contains Downloading
   assert_output_contains Finished.
