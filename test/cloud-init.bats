@@ -184,3 +184,42 @@ teardown() {
   run cat /tmp/boot/config.txt
   assert_output_contains "enable_uart=0"
 }
+
+@test "cloud-init: flash --userdata can be downloaded" {
+  run ./flash -f -d $img --userdata https://raw.githubusercontent.com/hypriot/flash/master/test/resources/good.yml cloud-init.img
+  assert_success
+  assert_output_contains Downloading
+  assert_output_contains Finished.
+
+  mount_sd_boot $img /tmp/boot
+  run cat /tmp/boot/user-data
+  assert_output_contains "hostname: good"
+  assert_output_contains "name: other"
+  assert_output_contains "ssh-authorized-keys:"
+
+  assert [ -e "/tmp/boot/meta-data" ]
+  assert [ ! -s "/tmp/boot/meta-data" ]
+}
+
+@test "cloud-init: flash --metadata can be downloaded" {
+  run ./flash -f -d $img --userdata test/resources/good.yml --metadata https://raw.githubusercontent.com/hypriot/flash/master/test/resources/meta.yml cloud-init.img
+  assert_success
+  assert_output_contains Downloading
+  assert_output_contains Finished.
+
+  mount_sd_boot $img /tmp/boot
+  run cat /tmp/boot/user-data
+  assert_output_contains "hostname: good"
+  assert_output_contains "name: other"
+  assert_output_contains "ssh-authorized-keys:"
+
+  run cat /tmp/boot/meta-data
+  assert_output_contains "instance-id: iid-local01"
+}
+
+@test "cloud-init: flash --userdata aborts on 'not found' (404)" {
+  run ./flash -f -d $img --userdata https://raw.githubusercontent.com/hypriot/flash/master/test/resources/foo.bar cloud-init.img
+  assert_failure
+
+  assert_output_contains "The requested URL returned error: 404 Not Found"
+}
