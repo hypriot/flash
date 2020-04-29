@@ -416,15 +416,10 @@ case "${OSTYPE}" in
     #
     # @param arg1 the disk name containing the partition
     find_boot_dev_name() {
-      if beginswith /dev/mmcblk "${1}" ;then
-        _RET="${1}p1"
-      elif beginswith /dev/loop "${1}" ;then
-        _RET="${1}p1"
-      else
-        _RET="${1}1"
-      fi
+      local device_id="${1}"
+      local disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "Microsoft" | head -n 1 | cut -f1 -d' ')
+      _RET="${disk_id}"
     }
-
 
     # Unmount a disk
     #
