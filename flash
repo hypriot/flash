@@ -219,7 +219,9 @@ case "${OSTYPE}" in
     # @param arg1 the name of the device holding the volume to be mounted
     # @return _RET mount point name
     get_boot_mount_point() {
-      _RET=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+      local device_id="${1}"
+      local disk_id=$(mount | grep "${device_id}" | grep msdos | cut -f1 -d' ')
+      _RET=$(df | grep --color=never "${disk_id}" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
     }
 
     # Wait for the new created disk to be available
