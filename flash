@@ -220,7 +220,8 @@ case "${OSTYPE}" in
     # @return _RET mount point name
     get_boot_mount_point() {
       local device_id="${1}"
-      local disk_id=$(mount | grep "${device_id}" | grep msdos | cut -f1 -d' ')
+      local disk_id
+      disk_id=$(mount | grep "${device_id}" | grep msdos | cut -f1 -d' ')
       _RET=$(df | grep --color=never "${disk_id}" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
     }
 
@@ -417,7 +418,8 @@ case "${OSTYPE}" in
     # @param arg1 the disk name containing the partition
     find_boot_dev_name() {
       local device_id="${1}"
-      local disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "Microsoft" | head -n 1 | cut -f1 -d' ')
+      local disk_id
+      disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "Microsoft" | head -n 1 | cut -f1 -d' ')
       _RET="${disk_id}"
     }
 
