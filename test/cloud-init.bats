@@ -18,6 +18,20 @@ teardown() {
   unstub_diskutil
 }
 
+@test "cloud-init: flash aborts if YAML is missing #cloud-config comment" {
+  run ./flash -f -d $img -u test/resources/missing-comment.yml cloud-init.img
+  assert_failure
+
+  assert_output_contains "is not a valid YAML file"
+}
+
+@test "cloud-init: flash aborts if YAML does not start with #cloud-config comment" {
+  run ./flash -f -d $img -u test/resources/comment-not-in-first-line.yml cloud-init.img
+  assert_failure
+
+  assert_output_contains "is not a valid YAML file"
+}
+
 @test "cloud-init: flash aborts if YAML is not valid" {
   if [ "${OS}" == "Darwin" ]; then
     run ./flash -f -d $img -u test/resources/bad.yml cloud-init.img

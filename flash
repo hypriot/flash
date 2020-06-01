@@ -153,12 +153,16 @@ case "${OSTYPE}" in
 
     validate_yaml() {
       set +e
-      if _RET=$(ruby -e "require 'yaml';YAML.load_file('$1')" 2>&1); then
-        set -e
-        return 0
+      if [[ $(sed -n '/^#cloud-config/p;q' "$1") ]]; then
+        if _RET=$(ruby -e "require 'yaml';YAML.load_file('$1')" 2>&1); then
+          set -e
+          return 0
+        fi
+        echo "File $1 is not a valid YAML file!"
+        echo "$_RET" | grep -v "from "
+      else
+        echo "File $1 is not a valid YAML file! It must contain #cloud-config in the first line."
       fi
-      echo "File $1 is not a valid YAML file!"
-      echo "$_RET" | grep -v "from "
       set -e
       false
     }
@@ -331,8 +335,16 @@ case "${OSTYPE}" in
     }
 
     validate_yaml() {
-      ## NO-OP in Linux
-      true
+      set +e
+      if [[ $(sed -n '/^#cloud-config/p;q' "$1") ]]; then
+        # no further yaml validation on Linux right now
+        set -e
+        return 0
+      else
+        echo "File $1 is not a valid YAML file! It must contain #cloud-config in the first line."
+      fi
+      set -e
+      false
     }
 
     # Try to identify the most likely device that the user will use to

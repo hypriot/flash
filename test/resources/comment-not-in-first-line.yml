@@ -1,0 +1,3 @@
+hostname: good
+manage_etc_hosts: true
+#cloud-config
