@@ -141,7 +141,6 @@ fi
 
 case "${OSTYPE}" in
   darwin*)
-    alias grep="grep --color=never"
     size_opt="-f %z"
     bs_size=1m
 
@@ -159,7 +158,7 @@ case "${OSTYPE}" in
           return 0
         fi
         echo "File $1 is not a valid YAML file!"
-        echo "$_RET" | grep -v "from "
+        echo "$_RET" | grep --color=never -v "from "
       else
         echo "File $1 is not a valid YAML file! It must contain #cloud-config in the first line."
       fi
@@ -187,7 +186,7 @@ case "${OSTYPE}" in
     # Show in the standard output the devices that are a likely
     # destination for the tool to write an image to.
     show_devices() {
-      diskutil list | grep FDisk_partition_scheme | awk 'NF>1{print $NF}'
+      diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}'
     }
 
     # Check that the target device can be written. It will return 0 in
@@ -201,7 +200,7 @@ case "${OSTYPE}" in
         _RET=1
         return
       fi
-      readonlymedia=$(diskutil info "$disk" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
+      readonlymedia=$(diskutil info "$disk" | grep --color=never "Read-Only Media" | awk 'NF>1{print $NF}')
       if [[ $readonlymedia == "No" ]] ; then
         _RET=1
       else
@@ -236,7 +235,7 @@ case "${OSTYPE}" in
         mv "$rawdisk" "${rawdisk}.readonly.dmg"
         hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
         rm -f "${rawdisk}.readonly.dmg"
-        disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
+        disk=$(hdiutil attach "$rawdisk" | grep --color=never FAT | sed 's/s1 .*$//')
         echo mounted FAT partition to "$disk"
         if [ "$disk" == "" ]; then
           echo Failed attaching "$rawdisk"
@@ -352,7 +351,7 @@ case "${OSTYPE}" in
     #
     # @return _RET the name of the device to use
     autodetect_device() {
-      _RET=$(lsblk -p -n -o NAME -d | grep mmcblk || true)
+      _RET=$(lsblk -p -n -o NAME -d | grep --color=never mmcblk || true)
     }
 
     # Show in the standard output the devices that are a likely
@@ -397,7 +396,7 @@ case "${OSTYPE}" in
         return
       fi
 
-      if sudo hdparm -r "$disk" | grep -q off; then
+      if sudo hdparm -r "$disk" | grep --color=never -q off; then
         _RET=1
       else
         _RET=0
@@ -440,7 +439,7 @@ case "${OSTYPE}" in
     #
     # @param arg1 the disk to unmount
     umount_disk() {
-      for i in $(df |grep "$1" | awk '{print $1}')
+      for i in $(df |grep --color=never "$1" | awk '{print $1}')
       do
         sudo umount "$i"
       done
@@ -597,7 +596,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
       command -v unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
       echo "Uncompressing ${image} ..."
       unzip -o "${image}" -d /tmp
-      image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
+      image=$(unzip -l "${image}" | grep --color=never -v Archive: | grep --color=never img | awk 'NF>1{print $NF}')
       image="/tmp/${image}"
       echo "Use ${image}"
     fi
