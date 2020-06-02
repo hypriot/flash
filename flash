@@ -141,7 +141,6 @@ fi
 
 case "${OSTYPE}" in
   darwin*)
-    alias grep="grep --color=never"
     size_opt="-f %z"
     bs_size=1m
 
@@ -153,12 +152,16 @@ case "${OSTYPE}" in
 
     validate_yaml() {
       set +e
-      if _RET=$(ruby -e "require 'yaml';YAML.load_file('$1')" 2>&1); then
-        set -e
-        return 0
+      if [[ $(sed -n '/^#cloud-config/p;q' "$1") ]]; then
+        if _RET=$(ruby -e "require 'yaml';YAML.load_file('$1')" 2>&1); then
+          set -e
+          return 0
+        fi
+        echo "File $1 is not a valid YAML file!"
+        echo "$_RET" | grep --color=never -v "from "
+      else
+        echo "File $1 is not a valid YAML file! It must contain #cloud-config in the first line."
       fi
-      echo "File $1 is not a valid YAML file!"
-      echo "$_RET" | grep -v "from "
       set -e
       false
     }
@@ -183,7 +186,7 @@ case "${OSTYPE}" in
     # Show in the standard output the devices that are a likely
     # destination for the tool to write an image to.
     show_devices() {
-      diskutil list | grep FDisk_partition_scheme | awk 'NF>1{print $NF}'
+      diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}'
     }
 
     # Check that the target device can be written. It will return 0 in
@@ -197,7 +200,7 @@ case "${OSTYPE}" in
         _RET=1
         return
       fi
-      readonlymedia=$(diskutil info "$disk" | grep "Read-Only Media" | awk 'NF>1{print $NF}')
+      readonlymedia=$(diskutil info "$disk" | grep --color=never "Read-Only Media" | awk 'NF>1{print $NF}')
       if [[ $readonlymedia == "No" ]] ; then
         _RET=1
       else
@@ -219,7 +222,10 @@ case "${OSTYPE}" in
     # @param arg1 the name of the device holding the volume to be mounted
     # @return _RET mount point name
     get_boot_mount_point() {
-      _RET=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+      local device_id="${1}"
+      local disk_id=$(mount | grep "${device_id}" | grep msdos | cut -f1 -d' ')
+      _RET=$(df | grep --color=never "${disk_id}" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
+      # _RET=$(df | grep --color=never "${1}s1" | /usr/bin/sed 's,.*/Volumes,/Volumes,')
     }
 
     # Wait for the new created disk to be available
@@ -232,7 +238,7 @@ case "${OSTYPE}" in
         mv "$rawdisk" "${rawdisk}.readonly.dmg"
         hdiutil convert "${rawdisk}.readonly.dmg" -format UDRW -o "$rawdisk"
         rm -f "${rawdisk}.readonly.dmg"
-        disk=$(hdiutil attach "$rawdisk" | grep FAT | sed 's/s1 .*$//')
+        disk=$(hdiutil attach "$rawdisk" | grep --color=never FAT | sed 's/s1 .*$//')
         echo mounted FAT partition to "$disk"
         if [ "$disk" == "" ]; then
           echo Failed attaching "$rawdisk"
@@ -331,8 +337,16 @@ case "${OSTYPE}" in
     }
 
     validate_yaml() {
-      ## NO-OP in Linux
-      true
+      set +e
+      if [[ $(sed -n '/^#cloud-config/p;q' "$1") ]]; then
+        # no further yaml validation on Linux right now
+        set -e
+        return 0
+      else
+        echo "File $1 is not a valid YAML file! It must contain #cloud-config in the first line."
+      fi
+      set -e
+      false
     }
 
     # Try to identify the most likely device that the user will use to
@@ -340,7 +354,7 @@ case "${OSTYPE}" in
     #
     # @return _RET the name of the device to use
     autodetect_device() {
-      _RET=$(lsblk -p -n -o NAME -d | grep mmcblk || true)
+      _RET=$(lsblk -p -n -o NAME -d | grep --color=never mmcblk || true)
     }
 
     # Show in the standard output the devices that are a likely
@@ -385,7 +399,7 @@ case "${OSTYPE}" in
         return
       fi
 
-      if sudo hdparm -r "$disk" | grep -q off; then
+      if sudo hdparm -r "$disk" | grep --color=never -q off; then
         _RET=1
       else
         _RET=0
@@ -414,13 +428,22 @@ case "${OSTYPE}" in
     #
     # @param arg1 the disk name containing the partition
     find_boot_dev_name() {
-      if beginswith /dev/mmcblk "${1}" ;then
-        _RET="${1}p1"
-      elif beginswith /dev/loop "${1}" ;then
-        _RET="${1}p1"
-      else
-        _RET="${1}1"
+      local device_id="${1}"
+      local disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "Microsoft" | head -n 1 | cut -f1 -d' ')
+      if [[ "$disk_id" == "" ]]; then
+        disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "FAT32" | head -n 1 | cut -f1 -d' ')
       fi
+      if [[ "$disk_id" == "" ]]; then
+        if beginswith /dev/mmcblk "${device_id}" ;then
+          disk_id="${device_id}p1"
+        elif beginswith /dev/loop "${device_id}" ;then
+          disk_id="${device_id}p1"
+        else
+          disk_id="${device_id}1"
+        fi
+      fi
+      # echo "disk_id: $disk_id"
+      _RET="${disk_id}"
     }
 
 
@@ -428,7 +451,7 @@ case "${OSTYPE}" in
     #
     # @param arg1 the disk to unmount
     umount_disk() {
-      for i in $(df |grep "$1" | awk '{print $1}')
+      for i in $(df |grep --color=never "$1" | awk '{print $1}')
       do
         sudo umount "$i"
       done
@@ -585,7 +608,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
       command -v unzip 2>/dev/null || error "Error: unzip not found. Aborting" 1
       echo "Uncompressing ${image} ..."
       unzip -o "${image}" -d /tmp
-      image=$(unzip -l "${image}" | grep -v Archive: | grep img | awk 'NF>1{print $NF}')
+      image=$(unzip -l "${image}" | grep --color=never -v Archive: | grep --color=never img | awk 'NF>1{print $NF}')
       image="/tmp/${image}"
       echo "Use ${image}"
     fi
