@@ -433,9 +433,9 @@ case "${OSTYPE}" in
       local device_id
       device_id="${1}"
       local disk_id
-      disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "Microsoft" | head -n 1 | cut -f1 -d' ')
+      disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "Microsoft" | head -n 1 | cut -f1 -d' ') || true
       if [[ "$disk_id" == "" ]]; then
-        disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "FAT32" | head -n 1 | cut -f1 -d' ')
+        disk_id=$(sudo fdisk "${device_id}" -l -o device,type 2>/dev/null | grep "FAT32" | head -n 1 | cut -f1 -d' ') || true
       fi
       if [[ "$disk_id" == "" ]]; then
         if beginswith /dev/mmcblk "${device_id}" ;then
