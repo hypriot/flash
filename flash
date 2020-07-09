@@ -105,7 +105,7 @@ while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
     f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
-    F)  EXTRA_FILES+=($OPTARG) ;;
+    F)  EXTRA_FILES+=("$OPTARG") ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
