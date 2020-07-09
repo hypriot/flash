@@ -63,6 +63,8 @@ EOF
   exit 1
 }
 
+declare -a EXTRA_FILES
+
 # translate long options to short
 for arg
 do
@@ -103,7 +105,7 @@ while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
     f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
-    F)  FILE=$OPTARG ;;
+    F)  EXTRA_FILES+=($OPTARG) ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -538,14 +540,14 @@ if [ -n "${META_DATA}" ]; then
   fi
 fi
 
-if [ -n "${FILE}" ]; then
-  http_download "$FILE" "flash.file"
-  FILE="$_RET"
-  if [ ! -f "${FILE}" ]; then
-    echo "File ${FILE} not found!"
+for index in "${!EXTRA_FILES[@]}"; do 
+  http_download "${EXTRA_FILES[$index]}" "flash.file.$index" 
+  EXTRA_FILES[$index]="$_RET"
+  if [ ! -f "${EXTRA_FILES[$index]}" ]; then
+    echo "File ${EXTRA_FILES[$index]} not found!"
     exit 10
   fi
-fi
+done
 
 if [ -n "${BOOT_CONF}" ]; then
   http_download "$BOOT_CONF" "flash.config.txt"
@@ -711,10 +713,10 @@ mount_boot_disk "${disk}" "${boot}"
     cp "${META_DATA}" "${boot}/meta-data"
   fi
 
-  if [ -f "${FILE}" ]; then
-    echo "Copying file ${FILE} to ${boot}/ ..."
-    cp "${FILE}" "${boot}/"
-  fi
+  for i in "${EXTRA_FILES[@]}"; do 
+    echo "Copying file ${i} to ${boot}/ ..."
+    cp "${i}" "${boot}/"
+  done
 
 if [ -f "${boot}/device-init.yaml" ]; then
   echo "Setting device-init"
