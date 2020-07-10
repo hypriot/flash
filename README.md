@@ -90,7 +90,7 @@ OPTIONS:
    --force|-f     Force flash without security prompt (for automation)
    --userdata|-u  Copy this cloud-init config file to /boot/user-data
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
-   --file|-F      Copy this custom file to /boot
+   --file|-F      Copy this file to /boot, use this flag multiple times to copy multiple files (e.g. flash --file note1.txt --file note2.txt ...)
 ```
 
 ## Configuration
@@ -204,6 +204,16 @@ For non-interactive usage, you can predefine the user input in the flash command
 ```
 flash -d /dev/mmcblk0 -f hypriotos-rpi-v1.12.0.img
 ```
+
+### Copying multiple custom files to /boot
+
+The option `-F/--file` can be used multiple times to copy some extra files to /boot after flashing the image, e.g.:
+
+```
+flash --file note1.txt --file note2.txt hypriotos-rpi-v1.12.0.img
+```
+
+In this example, both note1.txt and note2.txt will be available in /boot.
 
 ## Development
 
