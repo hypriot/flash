@@ -90,7 +90,7 @@ OPTIONS:
    --force|-f     Force flash without security prompt (for automation)
    --userdata|-u  Copy this cloud-init config file to /boot/user-data
    --metadata|-m  Copy this cloud-init config file to /boot/meta-data
-   --file|-F      Copy this file to /boot, use this flag multiple times to copy multiple files (e.g. flash --file note1.txt --file note2.txt ...)
+   --file|-F      Copy this custom file to /boot, use this flag multiple times to copy multiple files (e.g. flash --file note1.txt --file note2.txt ...)
 ```
 
 ## Configuration
