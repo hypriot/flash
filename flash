@@ -27,18 +27,20 @@ usage: $0 [options] [name-of-rpi.img]
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-  --help|-h       Show this message
-  --bootconf|-C   Copy this config file to /boot/config.txt
-  --config|-c     Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
-  --hostname|-n   Set hostname for this SD image
-  --ssid|-s       Set WiFi SSID for this SD image
-  --password|-p   Set WiFI password for this SD image
-  --clusterlab|-l Start Cluster-Lab on boot: true or false
-  --device|-d     Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
-  --force|-f      Force flash without security prompt (for automation)
-  --userdata|-u   Copy this cloud-init file to /boot/user-data
-  --metadata|-m   Copy this cloud-init file to /boot/meta-data
-  --file|-F       Copy this file to /boot
+  --help|-h          Show this message
+  --bootconf|-C      Copy this config file to /boot/config.txt
+  --config|-c        Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n      Set hostname for this SD image
+  --ssid|-s          Set WiFi SSID for this SD image
+  --password|-p      Set WiFI password for this SD image
+  --clusterlab|-l    Start Cluster-Lab on boot: true or false
+  --device|-d        Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
+  --force|-f         Force flash without security prompt (for automation)
+  --userdata|-u      Copy this cloud-init user-data file to /boot/user-data
+  --metadata|-m      Copy this cloud-init meta-data file to /boot/meta-data
+  --file|-F          Copy this file to /boot
+  --networkconfig|-N Copy this cloud-init network-config to /boot/network-config
+  --cmdline|-L       Copy this cmdline.txt to /boot/cmdline.txt
 
 If no image is specified, the script will try to configure an existing
 image. This is useful to try several configuration without the need to
@@ -81,6 +83,8 @@ do
     --userdata) args="${args}-u ";;
     --metadata) args="${args}-m ";;
     --file) args="${args}-F ";;
+    --networkconfig) args="${args}-N ";;
+    --cmdline) args="${args}-L ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
       args="${args}${delim}${arg}${delim} ";;
@@ -89,7 +93,7 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
+while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:N:L:" opt; do
   case $opt in
     h)  usage ;;
     v)  version ;;
@@ -104,6 +108,8 @@ while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
     F)  FILE=$OPTARG ;;
+    N)  NETWORK_CONFIG=$OPTARG ;;
+    L)  CMD_LINE=$OPTARG ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -538,6 +544,24 @@ if [ -n "${META_DATA}" ]; then
   fi
 fi
 
+if [ -n "${NETWORK_CONFIG}" ]; then
+  http_download "$NETWORK_CONFIG" "flash.network_config.yaml"
+  NETWORK_CONFIG="$_RET"
+  if [ ! -f "${NETWORK_CONFIG}" ]; then
+    echo "Cloud-init file ${NETWORK_CONFIG} not found!"
+    exit 10
+  fi
+fi
+
+if [ -n "${CMD_LINE}" ]; then
+  http_download "$CMD_LINE" "flash.cmdline.txt"
+  CMD_LINE="$_RET"
+  if [ ! -f "${CMD_LINE}" ]; then
+    echo "cmdline file ${CMD_LINE} not found!"
+    exit 10
+  fi
+fi
+
 if [ -n "${FILE}" ]; then
   http_download "$FILE" "flash.file"
   FILE="$_RET"
@@ -709,6 +733,16 @@ mount_boot_disk "${disk}" "${boot}"
   if [ -f "${META_DATA}" ]; then
     echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
     cp "${META_DATA}" "${boot}/meta-data"
+  fi
+
+  if [ -f "${NETWORK_CONFIG}" ]; then
+    echo "Copying cloud-init ${NETWORK_CONFIG} to ${boot}/network-config ..."
+    cp "${NETWORK_CONFIG}" "${boot}/network-config"
+  fi
+
+  if [ -f "${CMD_LINE}" ]; then
+    echo "Copying ${CMD_LINE} to ${boot}/cmdline.txt ..."
+    cp "${CMD_LINE}" "${boot}/cmdline.txt"
   fi
 
   if [ -f "${FILE}" ]; then
