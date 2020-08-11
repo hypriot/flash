@@ -29,6 +29,7 @@ Flash a local or remote Raspberry Pi SD card image.
 OPTIONS:
   --help|-h          Show this message
   --bootconf|-C      Copy this config file to /boot/config.txt
+  --bootuserconf|-U  Copy this config file to /boot/usercfg.txt
   --config|-c        Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
   --hostname|-n      Set hostname for this SD image
   --ssid|-s          Set WiFi SSID for this SD image
@@ -77,6 +78,7 @@ do
     --ssid) args="${args}-s ";;
     --password) args="${args}-p ";;
     --bootconf) args="${args}-C ";;
+    --bootuserconf) args="${args}-U ";;
     --clusterlab) args="${args}-l ";;
     --device) args="${args}-d ";;
     --force) args="${args}-f ";;
@@ -93,12 +95,13 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:N:L:" opt; do
+while getopts ":h:vc:n:s:p:C:U:l:d:fu:m:F:N:L:" opt; do
   case $opt in
     h)  usage ;;
     v)  version ;;
     c)  CONFIG_FILE=$OPTARG ;;
     C)  BOOT_CONF=$OPTARG ;;
+    U)  BOOT_USER_CONF=$OPTARG ;;
     n)  SD_HOSTNAME=$OPTARG ;;
     s)  WIFI_SSID=$OPTARG ;;
     p)  WIFI_PASSWORD=$OPTARG ;;
@@ -581,6 +584,15 @@ if [ -n "${BOOT_CONF}" ]; then
   fi
 fi
 
+if [ -n "${BOOT_USER_CONF}" ]; then
+  http_download "$BOOT_USER_CONF" "flash.usercfg.txt"
+  BOOT_USER_CONF="$_RET"
+  if [ ! -f "${BOOT_USER_CONF}" ]; then
+    echo "File ${BOOT_USER_CONF} not found!"
+    exit 10
+  fi
+fi
+
 if [ -n "${CONFIG_FILE}" ]; then
   http_download "$CONFIG_FILE" "flash.device_init.yaml"
   CONFIG_FILE="$_RET"
@@ -724,6 +736,11 @@ mount_boot_disk "${disk}" "${boot}"
   if [[ -f "${BOOT_CONF}" ]]; then
     echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
     cp "${BOOT_CONF}" "${boot}/config.txt"
+  fi
+
+  if [[ -f "${BOOT_USER_CONF}" ]]; then
+    echo "Copying ${BOOT_USER_CONF} to ${boot}/usercfg.txt ..."
+    cp "${BOOT_USER_CONF}" "${boot}/usercfg.txt"
   fi
 
   if [ -f "${USER_DATA}" ]; then
