@@ -39,8 +39,8 @@ OPTIONS:
   --force|-f         Force flash without security prompt (for automation)
   --userdata|-u      Copy this cloud-init user-data file to /boot/user-data
   --metadata|-m      Copy this cloud-init meta-data file to /boot/meta-data
+  --networkconfig|-N Copy this cloud-init network-config file to /boot/network-config
   --file|-F          Copy this file to /boot
-  --networkconfig|-N Copy this cloud-init network-config to /boot/network-config
   --cmdline|-L       Copy this cmdline.txt to /boot/cmdline.txt
 
 If no image is specified, the script will try to configure an existing
@@ -84,8 +84,8 @@ do
     --force) args="${args}-f ";;
     --userdata) args="${args}-u ";;
     --metadata) args="${args}-m ";;
-    --file) args="${args}-F ";;
     --networkconfig) args="${args}-N ";;
+    --file) args="${args}-F ";;
     --cmdline) args="${args}-L ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
@@ -110,8 +110,8 @@ while getopts ":h:vc:n:s:p:C:U:l:d:fu:m:F:N:L:" opt; do
     f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
-    F)  FILE=$OPTARG ;;
     N)  NETWORK_CONFIG=$OPTARG ;;
+    F)  FILE=$OPTARG ;;
     L)  CMD_LINE=$OPTARG ;;
     \?) usage ;;
     :)
