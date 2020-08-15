@@ -189,7 +189,7 @@ case "${OSTYPE}" in
           _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
         done
       fi
-      diskutil list $_RET
+      diskutil list "${_RET}"
       set -e
     }
 
