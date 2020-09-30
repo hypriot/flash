@@ -5,7 +5,7 @@
 # Linux initial version by Matt Williams - matt@matthewkwilliams.com
 # MIT License
 
-set -eo pipefail
+set -exo pipefail
 
 error()
 {
@@ -22,23 +22,24 @@ version()
 usage()
 {
   cat << EOF
-usage: $0 [options] [name-of-rpi.img]
+usage: $0 [options] [name-of-rpi.img] [name-of-rpi-copy.img]
 
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-  --help|-h       Show this message
-  --bootconf|-C   Copy this config file to /boot/config.txt
-  --config|-c     Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
-  --hostname|-n   Set hostname for this SD image
-  --ssid|-s       Set WiFi SSID for this SD image
-  --password|-p   Set WiFI password for this SD image
-  --clusterlab|-l Start Cluster-Lab on boot: true or false
-  --device|-d     Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
-  --force|-f      Force flash without security prompt (for automation)
-  --userdata|-u   Copy this cloud-init file to /boot/user-data
-  --metadata|-m   Copy this cloud-init file to /boot/meta-data
-  --file|-F       Copy this file to /boot
+  --help|-h         Show this message
+  --bootconf|-C     Copy this config file to /boot/config.txt
+  --config|-c       Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n     Set hostname for this SD image
+  --ssid|-s         Set WiFi SSID for this SD image
+  --password|-p     Set WiFI password for this SD image
+  --clusterlab|-l   Start Cluster-Lab on boot: true or false
+  --device|-d       Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
+  --force|-f        Force flash without security prompt (for automation)
+  --userdata|-u     Copy this cloud-init file to /boot/user-data
+  --metadata|-m     Copy this cloud-init file to /boot/meta-data
+  --file|-F         Copy this file to /boot
+  --update-image|-U Update an image copy and do not flash to disk
 
 If no image is specified, the script will try to configure an existing
 image. This is useful to try several configuration without the need to
@@ -57,7 +58,7 @@ wifi:
 
 For HypriotOS v1.7.0 and higher:
 
-The config file user-data config file is the cloud-init configuration.
+The config file config file is the cloud-init configuration.
 See http://cloudinit.readthedocs.io/en/0.7.9/ for more details.
 EOF
   exit 1
@@ -81,6 +82,7 @@ do
     --userdata) args="${args}-u ";;
     --metadata) args="${args}-m ";;
     --file) args="${args}-F ";;
+    --update-image) args="${args}-U ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
       args="${args}${delim}${arg}${delim} ";;
@@ -89,7 +91,7 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
+while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:U" opt; do
   case $opt in
     h)  usage ;;
     v)  version ;;
@@ -104,6 +106,7 @@ while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
     F)  FILE=$OPTARG ;;
+    U)  UPDATE_IMAGE=1 ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -124,6 +127,7 @@ if [[ "$1" == "--help" ]]; then
   usage
 fi
 image=$1
+image_copy=$2
 
 if [[ -z $image ]]; then
   CONFIGURE_ONLY=1
@@ -465,6 +469,22 @@ case "${OSTYPE}" in
       ls -la "${mount_point}"
     }
 
+    # Mount the boot image to the specified point
+    #
+    # @param arg1 the image to mount.
+    # @param arg2 mount point
+    mount_image() {
+      local image=$1
+      local mount_point=$2
+
+      # We need to grab the byte offset for the fat16 boot partition
+      offset=$(sudo parted -m ${image} unit B print | grep fat16 | cut --delimiter=":" --fields=2)
+
+      sudo mount -o loop,offset="${offset%B}",uid="$(id -u)",gid="$(id -g)" "${image}" "${mount_point}"
+      
+      ls -la "${mount_point}"
+    }
+
     cleanup() {
       rmdir "$1"
     }
@@ -493,14 +513,16 @@ case "${OSTYPE}" in
     ;;
 esac
 
-if endswith microsoft-standard "$(uname -r)"; then
-  echo This script does not work in WSL2.
-  exit 11
-fi
+if [[ -z $UPDATE_IMAGE ]] ; then
+  if endswith microsoft-standard "$(uname -r)"; then
+    echo This script does not work in WSL2.
+    exit 11
+  fi
 
-if endswith Microsoft "$(uname -r)"; then
-  echo This script does not work in WSL1.
-  exit 11
+  if endswith Microsoft "$(uname -r)"; then
+    echo This script does not work in WSL1.
+    exit 11
+  fi
 fi
 
 check_requirements
@@ -565,7 +587,7 @@ if [ -n "${CONFIG_FILE}" ]; then
   fi
 fi
 
-if [[ -z $CONFIGURE_ONLY ]] ; then
+if [ -z $CONFIGURE_ONLY -a -z $UPDATE_IMAGE ] ; then
   if [ -f "/tmp/${filename}" ]; then
     image=/tmp/${filename}
     echo "Using cached image ${image}"
@@ -618,50 +640,50 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   fi
 fi
 
-while true; do
-  disk="$DEVICE"
-  if [[ -z "${disk}" ]]; then
-    autodetect_device
-    disk="$_RET"
-
+flash_image () {
+  while true; do
+    disk="$DEVICE"
     if [[ -z "${disk}" ]]; then
-      show_devices
-      # shellcheck disable=SC2162
-      read -p "Please pick your device: "
-      disk="${REPLY}"
-      [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
+      autodetect_device
+      disk="$_RET"
+
+      if [[ -z "${disk}" ]]; then
+        show_devices
+        # shellcheck disable=SC2162
+        read -p "Please pick your device: "
+        disk="${REPLY}"
+        [[ ${disk} != /dev/* ]] && disk="/dev/${disk}"
+      fi
     fi
-  fi
-  if [[ -z "${FORCE}" ]]; then
-    while true; do
-      echo ""
-      read -rp "Is ${disk} correct? " yn
-      case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-      esac
-    done
-  fi
+    if [[ -z "${FORCE}" ]]; then
+      while true; do
+        echo ""
+        read -rp "Is ${disk} correct? " yn
+        case $yn in
+          [Yy]* ) break;;
+          [Nn]* ) exit;;
+          * ) echo "Please answer yes or no.";;
+        esac
+      done
+    fi
 
-  prepare_raw_disk "${disk}"
-  disk=$_RET
+    prepare_raw_disk "${disk}"
+    disk=$_RET
 
-  check_device_is_writable "${disk}"
-  writable=$_RET
+    check_device_is_writable "${disk}"
+    writable=$_RET
 
-  echo "Unmounting ${disk} ..."
-  umount_disk "${disk}"
+    echo "Unmounting ${disk} ..."
+    umount_disk "${disk}"
 
-  if [ "$writable" == "1" ]; then
-    break
-  else
-    play_warn
-    echo "The SD card is write protected. Please eject, remove protection and insert again."
-  fi
-done
+    if [ "$writable" == "1" ]; then
+      break
+    else
+      play_warn
+      echo "The SD card is write protected. Please eject, remove protection and insert again."
+    fi
+  done
 
-if [[ -z $CONFIGURE_ONLY ]] ; then
   get_raw_device_filename "$disk"
   rawdisk=$_RET
 
@@ -677,44 +699,50 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   fi
 
   wait_for_disk "${disk}"
-fi
+}
 
-echo "Mounting Disk"
 get_boot_mount_point "${disk}"
 boot="$_RET"
 
-echo "Mounting ${disk} to customize..."
-mount_boot_disk "${disk}" "${boot}"
+if [[ -z $UPDATE_IMAGE ]] ; then
+  echo "Mounting ${disk} to customize..."
+  mount_boot_disk "${disk}" "${boot}"
+else
+  echo "Making copy of disk image"
+  cp ${image} "${image_copy}"
+  echo "Mounting ${disk} to customize..."
+  mount_image "${image_copy}" "${boot}"
+fi
 
- if [ -f "${CONFIG_FILE}" ]; then
-    if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
-      echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
-      cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
-    else
-      echo "Copying ${CONFIG_FILE} to ${boot}/device-init.yaml ..."
-      cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
-    fi
+if [ -f "${CONFIG_FILE}" ]; then
+  if [[ "${CONFIG_FILE}" == *"occi"* ]]; then
+    echo "Copying ${CONFIG_FILE} to ${boot}/occidentalis.txt ..."
+    cp "${CONFIG_FILE}"  "${boot}/occidentalis.txt"
+  else
+    echo "Copying ${CONFIG_FILE} to ${boot}/device-init.yaml ..."
+    cp "${CONFIG_FILE}"  "${boot}/device-init.yaml"
   fi
+fi
 
-  if [[ -f "${BOOT_CONF}" ]]; then
-    echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
-    cp "${BOOT_CONF}" "${boot}/config.txt"
-  fi
+if [[ -f "${BOOT_CONF}" ]]; then
+  echo "Copying ${BOOT_CONF} to ${boot}/config.txt ..."
+  cp "${BOOT_CONF}" "${boot}/config.txt"
+fi
 
-  if [ -f "${USER_DATA}" ]; then
-    echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
-    cp "${USER_DATA}" "${boot}/user-data"
-  fi
+if [ -f "${USER_DATA}" ]; then
+  echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
+  cp "${USER_DATA}" "${boot}/user-data"
+fi
 
-  if [ -f "${META_DATA}" ]; then
-    echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
-    cp "${META_DATA}" "${boot}/meta-data"
-  fi
+if [ -f "${META_DATA}" ]; then
+  echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
+  cp "${META_DATA}" "${boot}/meta-data"
+fi
 
-  if [ -f "${FILE}" ]; then
-    echo "Copying file ${FILE} to ${boot}/ ..."
-    cp "${FILE}" "${boot}/"
-  fi
+if [ -f "${FILE}" ]; then
+  echo "Copying file ${FILE} to ${boot}/ ..."
+  cp "${FILE}" "${boot}/"
+fi
 
 if [ -f "${boot}/device-init.yaml" ]; then
   echo "Setting device-init"
@@ -780,11 +808,17 @@ if [ -f "${boot}/occidentalis.txt" ]; then
   fi
 fi
 
-echo "Unmounting ${disk} ..."
-sleep 5
-
-set +e
-detach "${disk}"
+if [[ -z $UPDATE_IMAGE ]]; then
+  echo "Unmounting ${disk} ..."
+  sleep 5
+  set +e
+  detach "${disk}"
+else
+  echo "Unmounting ${boot} ..."
+  sleep 5
+  set +e
+  sudo umount "${boot}"
+fi
 
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
