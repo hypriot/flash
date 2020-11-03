@@ -38,7 +38,7 @@ OPTIONS:
   --force|-f        Force flash without security prompt (for automation)
   --userdata|-u     Copy this cloud-init file to /boot/user-data
   --metadata|-m     Copy this cloud-init file to /boot/meta-data
-  --file|-F         Copy this file to /boot
+  --files|-F        Copy files to /boot (use a , to separate multiple files to be copied)
   --update-image|-U Update an image copy and do not flash to disk
 
 If no image is specified, the script will try to configure an existing
@@ -81,7 +81,7 @@ do
     --force) args="${args}-f ";;
     --userdata) args="${args}-u ";;
     --metadata) args="${args}-m ";;
-    --file) args="${args}-F ";;
+    --files) args="${args}-F ";;
     --update-image) args="${args}-U ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
@@ -478,7 +478,7 @@ case "${OSTYPE}" in
       local mount_point=$2
 
       # We need to grab the byte offset for the fat16 boot partition
-      offset=$(sudo parted -m ${image} unit B print | grep fat16 | cut --delimiter=":" --fields=2)
+      offset=$(sudo parted -m ${image} unit B print | grep ':fat' | cut --delimiter=":" --fields=2)
 
       sudo mount -o loop,offset="${offset%B}",uid="$(id -u)",gid="$(id -g)" "${image}" "${mount_point}"
       
@@ -560,14 +560,16 @@ if [ -n "${META_DATA}" ]; then
   fi
 fi
 
-if [ -n "${FILE}" ]; then
-  http_download "$FILE" "flash.file"
-  FILE="$_RET"
-  if [ ! -f "${FILE}" ]; then
-    echo "File ${FILE} not found!"
-    exit 10
+for i in ${FILE//,/ }; do
+  if [ -n "${i}" ]; then
+    http_download "$i" "flash.file"
+    i="$_RET"
+    if [ ! -f "${i}" ]; then
+      echo "File ${i} not found!"
+      exit 10
+    fi
   fi
-fi
+done
 
 if [ -n "${BOOT_CONF}" ]; then
   http_download "$BOOT_CONF" "flash.config.txt"
@@ -587,7 +589,7 @@ if [ -n "${CONFIG_FILE}" ]; then
   fi
 fi
 
-if [ -z $CONFIGURE_ONLY -a -z $UPDATE_IMAGE ] ; then
+if [ -z $CONFIGURE_ONLY && -z $UPDATE_IMAGE ] ; then
   if [ -f "/tmp/${filename}" ]; then
     image=/tmp/${filename}
     echo "Using cached image ${image}"
@@ -739,10 +741,12 @@ if [ -f "${META_DATA}" ]; then
   cp "${META_DATA}" "${boot}/meta-data"
 fi
 
-if [ -f "${FILE}" ]; then
-  echo "Copying file ${FILE} to ${boot}/ ..."
-  cp "${FILE}" "${boot}/"
-fi
+for i in ${FILE//,/ }; do
+  if [ -f "${i}" ]; then
+    echo "Copying file ${i} to ${boot}/ ..."
+    cp "${i}" "${boot}/"
+  fi
+done
 
 if [ -f "${boot}/device-init.yaml" ]; then
   echo "Setting device-init"
