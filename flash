@@ -200,7 +200,7 @@ case "${OSTYPE}" in
         _RET=1
         return
       fi
-      readonlymedia=$(diskutil info "$disk" | grep --color=never "Read-Only Media" | awk 'NF>1{print $NF}')
+      readonlymedia=$(diskutil info "$disk" | grep --color=never "Read-Only Media\|Media Read-Only" | awk 'NF>1{print $NF}')
       if [[ $readonlymedia == "No" ]] ; then
         _RET=1
       else
