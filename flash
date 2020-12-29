@@ -669,7 +669,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   if [[ -x $(command -v pv) ]]; then
     sudo_prompt
     size=$(/usr/bin/stat "$size_opt" "${image}")
-    pv -s "${size}" < "${image}" | sudo dd bs=$bs_size "of=${rawdisk}"
+    pv -s "${size}" < "${image}" | sudo dd bs=$bs_size "of=${rawdisk}" iflag=fullblock oflag=direct bs=1M
   else
     echo "No 'pv' command found, so no progress available."
     echo "Press CTRL+T if you want to see the current info of dd command."
