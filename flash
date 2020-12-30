@@ -143,6 +143,7 @@ case "${OSTYPE}" in
   darwin*)
     size_opt="-f %z"
     bs_size=1m
+    dd_flags="iflag=fullblock oflag=direct bs=1M"
 
     # Check that the system has all the needed binaries/requirements in place
     check_requirements() {
@@ -323,6 +324,7 @@ case "${OSTYPE}" in
   Linux|linux|linux-gnu*)
     size_opt="-c %s"
     bs_size=1M
+    dd_flags="iflag=fullblock oflag=direct bs=1M"
 
     # Check that the system has all the needed binaries/requirements in place
     check_requirements() {
@@ -669,7 +671,7 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   if [[ -x $(command -v pv) ]]; then
     sudo_prompt
     size=$(/usr/bin/stat "$size_opt" "${image}")
-    pv -s "${size}" < "${image}" | sudo dd bs=$bs_size "of=${rawdisk}" iflag=fullblock oflag=direct bs=1M
+    pv -s "${size}" < "${image}" | sudo dd bs=$bs_size "of=${rawdisk}" ${dd_flags}
   else
     echo "No 'pv' command found, so no progress available."
     echo "Press CTRL+T if you want to see the current info of dd command."
