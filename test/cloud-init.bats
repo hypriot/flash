@@ -235,5 +235,5 @@ teardown() {
   run ./flash -f -d $img --userdata https://raw.githubusercontent.com/hypriot/flash/master/test/resources/foo.bar cloud-init.img
   assert_failure
 
-  assert_output_contains "The requested URL returned error: 404 Not Found"
+  assert_output_contains "The requested URL returned error: 404"
 }
