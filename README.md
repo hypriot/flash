@@ -41,7 +41,7 @@ At the moment only Mac OS X and Linux is supported.
 Download the appropriate version for Linux or Mac with this command
 
 ```bash
-curl -LO https://github.com/hypriot/flash/releases/download/2.7.0/flash
+curl -LO https://github.com/hypriot/flash/releases/download/2.7.2/flash
 chmod +x flash
 sudo mv flash /usr/local/bin/flash
 ```
