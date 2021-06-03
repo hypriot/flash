@@ -418,7 +418,9 @@ case "${OSTYPE}" in
     wait_for_disk() {
       echo "Waiting for device $1"
       udevadm settle
-      sudo hdparm -z "$1"
+      while : ; do
+        sudo hdparm -z "$1" && break
+      done
     }
 
     # Find the device name of the boot partition
