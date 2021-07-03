@@ -142,7 +142,7 @@ fi
 case "${OSTYPE}" in
   darwin*)
     size_opt="-f %z"
-    bs_size=1m
+    bs_size=1M
 
     # Check that the system has all the needed binaries/requirements in place
     check_requirements() {
