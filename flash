@@ -27,18 +27,21 @@ usage: $0 [options] [name-of-rpi.img]
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-  --help|-h       Show this message
-  --bootconf|-C   Copy this config file to /boot/config.txt
-  --config|-c     Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
-  --hostname|-n   Set hostname for this SD image
-  --ssid|-s       Set WiFi SSID for this SD image
-  --password|-p   Set WiFI password for this SD image
-  --clusterlab|-l Start Cluster-Lab on boot: true or false
-  --device|-d     Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
-  --force|-f      Force flash without security prompt (for automation)
-  --userdata|-u   Copy this cloud-init file to /boot/user-data
-  --metadata|-m   Copy this cloud-init file to /boot/meta-data
-  --file|-F       Copy this file to /boot
+  --help|-h          Show this message
+  --bootconf|-C      Copy this config file to /boot/config.txt
+  --bootuserconf|-U  Copy this config file to /boot/usercfg.txt
+  --config|-c        Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n      Set hostname for this SD image
+  --ssid|-s          Set WiFi SSID for this SD image
+  --password|-p      Set WiFI password for this SD image
+  --clusterlab|-l    Start Cluster-Lab on boot: true or false
+  --device|-d        Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
+  --force|-f         Force flash without security prompt (for automation)
+  --userdata|-u      Copy this cloud-init user-data file to /boot/user-data
+  --metadata|-m      Copy this cloud-init meta-data file to /boot/meta-data
+  --networkconfig|-N Copy this cloud-init network-config file to /boot/network-config
+  --file|-F          Copy this file to /boot
+  --cmdline|-L       Copy this cmdline.txt to /boot/cmdline.txt
 
 If no image is specified, the script will try to configure an existing
 image. This is useful to try several configuration without the need to
@@ -75,12 +78,15 @@ do
     --ssid) args="${args}-s ";;
     --password) args="${args}-p ";;
     --bootconf) args="${args}-C ";;
+    --bootuserconf) args="${args}-U ";;
     --clusterlab) args="${args}-l ";;
     --device) args="${args}-d ";;
     --force) args="${args}-f ";;
     --userdata) args="${args}-u ";;
     --metadata) args="${args}-m ";;
+    --networkconfig) args="${args}-N ";;
     --file) args="${args}-F ";;
+    --cmdline) args="${args}-L ";;
     # pass through anything else
     *) [[ "${arg:0:1}" == "-" ]] || delim="\""
       args="${args}${delim}${arg}${delim} ";;
@@ -89,12 +95,13 @@ done
 # reset the translated args
 eval set -- "$args"
 # now we can process with getopt
-while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
+while getopts ":h:vc:n:s:p:C:U:l:d:fu:m:F:N:L:" opt; do
   case $opt in
     h)  usage ;;
     v)  version ;;
     c)  CONFIG_FILE=$OPTARG ;;
     C)  BOOT_CONF=$OPTARG ;;
+    U)  BOOT_USER_CONF=$OPTARG ;;
     n)  SD_HOSTNAME=$OPTARG ;;
     s)  WIFI_SSID=$OPTARG ;;
     p)  WIFI_PASSWORD=$OPTARG ;;
@@ -103,7 +110,9 @@ while getopts ":h:vc:n:s:p:C:l:d:fu:m:F:" opt; do
     f)  FORCE=1 ;;
     u)  USER_DATA=$OPTARG ;;
     m)  META_DATA=$OPTARG ;;
+    N)  NETWORK_CONFIG=$OPTARG ;;
     F)  FILE=$OPTARG ;;
+    L)  CMD_LINE=$OPTARG ;;
     \?) usage ;;
     :)
       echo "option -$OPTARG requires an argument"
@@ -180,6 +189,7 @@ case "${OSTYPE}" in
           _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
         done
       fi
+      diskutil list "${_RET}"
       set -e
     }
 
@@ -538,6 +548,24 @@ if [ -n "${META_DATA}" ]; then
   fi
 fi
 
+if [ -n "${NETWORK_CONFIG}" ]; then
+  http_download "$NETWORK_CONFIG" "flash.network_config.yaml"
+  NETWORK_CONFIG="$_RET"
+  if [ ! -f "${NETWORK_CONFIG}" ]; then
+    echo "Cloud-init file ${NETWORK_CONFIG} not found!"
+    exit 10
+  fi
+fi
+
+if [ -n "${CMD_LINE}" ]; then
+  http_download "$CMD_LINE" "flash.cmdline.txt"
+  CMD_LINE="$_RET"
+  if [ ! -f "${CMD_LINE}" ]; then
+    echo "cmdline file ${CMD_LINE} not found!"
+    exit 10
+  fi
+fi
+
 if [ -n "${FILE}" ]; then
   http_download "$FILE" "flash.file"
   FILE="$_RET"
@@ -552,6 +580,15 @@ if [ -n "${BOOT_CONF}" ]; then
   BOOT_CONF="$_RET"
   if [ ! -f "${BOOT_CONF}" ]; then
     echo "File ${BOOT_CONF} not found!"
+    exit 10
+  fi
+fi
+
+if [ -n "${BOOT_USER_CONF}" ]; then
+  http_download "$BOOT_USER_CONF" "flash.usercfg.txt"
+  BOOT_USER_CONF="$_RET"
+  if [ ! -f "${BOOT_USER_CONF}" ]; then
+    echo "File ${BOOT_USER_CONF} not found!"
     exit 10
   fi
 fi
@@ -701,6 +738,11 @@ mount_boot_disk "${disk}" "${boot}"
     cp "${BOOT_CONF}" "${boot}/config.txt"
   fi
 
+  if [[ -f "${BOOT_USER_CONF}" ]]; then
+    echo "Copying ${BOOT_USER_CONF} to ${boot}/usercfg.txt ..."
+    cp "${BOOT_USER_CONF}" "${boot}/usercfg.txt"
+  fi
+
   if [ -f "${USER_DATA}" ]; then
     echo "Copying cloud-init ${USER_DATA} to ${boot}/user-data ..."
     cp "${USER_DATA}" "${boot}/user-data"
@@ -709,6 +751,16 @@ mount_boot_disk "${disk}" "${boot}"
   if [ -f "${META_DATA}" ]; then
     echo "Copying cloud-init ${META_DATA} to ${boot}/meta-data ..."
     cp "${META_DATA}" "${boot}/meta-data"
+  fi
+
+  if [ -f "${NETWORK_CONFIG}" ]; then
+    echo "Copying cloud-init ${NETWORK_CONFIG} to ${boot}/network-config ..."
+    cp "${NETWORK_CONFIG}" "${boot}/network-config"
+  fi
+
+  if [ -f "${CMD_LINE}" ]; then
+    echo "Copying ${CMD_LINE} to ${boot}/cmdline.txt ..."
+    cp "${CMD_LINE}" "${boot}/cmdline.txt"
   fi
 
   if [ -f "${FILE}" ]; then

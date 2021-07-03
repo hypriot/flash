@@ -79,18 +79,21 @@ usage: flash [options] [name-of-rpi.img]
 Flash a local or remote Raspberry Pi SD card image.
 
 OPTIONS:
-   --help|-h      Show this message
-   --bootconf|-C  Copy this config file to /boot/config.txt
-   --config|-c    Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
-   --hostname|-n  Set hostname for this SD image
-   --ssid|-s      Set WiFi SSID for this SD image
-   --password|-p  Set WiFI password for this SD image
-   --clusterlab|-l Start Cluster-Lab on boot: true or false
-   --device|-d    Card device to flash to (e.g. /dev/disk2)
-   --force|-f     Force flash without security prompt (for automation)
-   --userdata|-u  Copy this cloud-init config file to /boot/user-data
-   --metadata|-m  Copy this cloud-init config file to /boot/meta-data
-   --file|-F      Copy this custom file to /boot
+  --help|-h          Show this message
+  --bootconf|-C      Copy this config file to /boot/config.txt
+  --bootuserconf|-U  Copy this config file to /boot/usercfg.txt
+  --config|-c        Copy this config file to /boot/device-init.yaml (or occidentalis.txt)
+  --hostname|-n      Set hostname for this SD image
+  --ssid|-s          Set WiFi SSID for this SD image
+  --password|-p      Set WiFI password for this SD image
+  --clusterlab|-l    Start Cluster-Lab on boot: true or false
+  --device|-d        Card device to flash to (e.g. /dev/sdb in Linux or /dev/disk2 in OSX)
+  --force|-f         Force flash without security prompt (for automation)
+  --userdata|-u      Copy this cloud-init user-data file to /boot/user-data
+  --metadata|-m      Copy this cloud-init meta-data file to /boot/meta-data
+  --networkconfig|-N Copy this cloud-init network-config file to /boot/network-config
+  --file|-F          Copy this file to /boot
+  --cmdline|-L       Copy this cmdline.txt to /boot/cmdline.txt
 ```
 
 ## Configuration
@@ -99,7 +102,7 @@ The strength of the flash tool is that it can insert some configuration files th
 
 ### cloud-init
 
-With HypriotOS v1.7.0 and higher the options `--userdata` and `--metadata` can be used to copy both cloud-init config files into the FAT partition.
+With HypriotOS v1.7.0 and higher the options `--userdata`, `--metadata` and `--networkconfig` can be used to copy the cloud-init config files `user-data`, `meta-data` and `network-config` respectively into the FAT partition. 
 
 This is an example how to create our default user with a password.
 
@@ -127,10 +130,11 @@ package_upgrade: false
 Please have a look at the [`sample`](sample/) folder, our guest blogpost [Bootstrapping a Cloud with Cloud-Init and HypriotOS](https://blog.hypriot.com/post/cloud-init-cloud-on-hypriot-x64/) or at the [cloud-init documentation](http://cloudinit.readthedocs.io/en/0.7.9/)
 how to do more things like using SSH keys, running additional commands etc.
 
-### config.txt
+### config.txt, usercfg.txt
 
 The option `--bootconf` can be used to copy a `config.txt` into the SD image
-before it is unplugged.
+before it is unplugged. The option `--bootuserconf` copies a `usercfg.txt` and should be 
+used instead on distributions using a modular `config.txt` like Ubuntu.
 
 With this option it is possible to change some memory, camera, video settings
 etc. See the [config.txt documentation](https://www.raspberrypi.org/documentation/configuration/config-txt/README.md)
@@ -142,6 +146,10 @@ The boot config file config.txt has name/value pairs such as:
 max_usb_current=1
 hdmi_force_hotplug=1
 ```
+
+### cmdline.txt
+
+The option `--cmdline` can be used to copy a `cmdline.txt` to the SD image and e.g. modify kernel boot parameters.
 
 ### device-init.yaml
 
