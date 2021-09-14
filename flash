@@ -164,7 +164,7 @@ case "${OSTYPE}" in
       diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}'
     }
     get_first_device() {
-      echo $(show_devices | head -n 1)
+      show_devices | head -n 1
     }
 
     # Check that the system has all the needed binaries/requirements in place
