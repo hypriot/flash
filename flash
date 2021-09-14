@@ -5,6 +5,10 @@
 # Linux initial version by Matt Williams - matt@matthewkwilliams.com
 # MIT License
 
+# Allow user control of which program is used for writing
+# SD card image.
+DD=${DD:-/bin/dd}
+
 set -eo pipefail
 
 error()
@@ -142,7 +146,26 @@ fi
 case "${OSTYPE}" in
   darwin*)
     size_opt="-f %z"
-    bs_size=1m
+    # 'dd' may be one of several; just try the options for size
+    # to see which one is first in PATH.
+    if "${DD}" bs=1m count=1 if=/dev/zero of=/dev/null 2>/dev/null; then
+      bs_size=1m
+    elif "${DD}" bs=1M count=1 if=/dev/zero of=/dev/null 2>/dev/null; then
+      bs_size=1M
+    else
+        echo "could not determine dd blocksize: is dd installed?"
+        echo "(hint: export environment variable 'DD' with path to 'dd' program)"
+        exit 1
+    fi
+
+    # Show in the standard output the devices that are a likely
+    # destination for the tool to write an image to.
+    show_devices() {
+      diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}'
+    }
+    get_first_device() {
+      echo $(show_devices | head -n 1)
+    }
 
     # Check that the system has all the needed binaries/requirements in place
     check_requirements() {
@@ -171,22 +194,17 @@ case "${OSTYPE}" in
     # return _RET: the name of the device to use
     autodetect_device() {
       set +e
-      _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+      # Handle situation where multiple devices are found by taking the first one.
+      _RET=/dev/$(get_first_device)
 
       if [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; then
         echo "No SD card found. Please insert SD card, I'll wait for it..."
         while [ "${_RET}" == "" ] || [ "${_RET}" == "/dev/" ]; do
           sleep 1
-          _RET=/dev/$(diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}')
+          _RET=/dev/$(get_first_device)
         done
       fi
       set -e
-    }
-
-    # Show in the standard output the devices that are a likely
-    # destination for the tool to write an image to.
-    show_devices() {
-      diskutil list | grep --color=never FDisk_partition_scheme | awk 'NF>1{print $NF}'
     }
 
     # Check that the target device can be written. It will return 0 in
@@ -200,7 +218,7 @@ case "${OSTYPE}" in
         _RET=1
         return
       fi
-      readonlymedia=$(diskutil info "$disk" | grep --color=never "Read-Only Media\|Media Read-Only" | awk 'NF>1{print $NF}')
+      readonlymedia=$(diskutil info "$disk" | grep --color=never "Read-Only Media\|Media Read-Only" | awk 'NF>1 {print $NF; exit 0}')
       if [[ $readonlymedia == "No" ]] ; then
         _RET=1
       else
@@ -669,11 +687,11 @@ if [[ -z $CONFIGURE_ONLY ]] ; then
   if [[ -x $(command -v pv) ]]; then
     sudo_prompt
     size=$(/usr/bin/stat "$size_opt" "${image}")
-    pv -s "${size}" < "${image}" | sudo dd bs=$bs_size "of=${rawdisk}"
+    pv -s "${size}" < "${image}" | sudo "${DD}" bs=$bs_size "of=${rawdisk}"
   else
     echo "No 'pv' command found, so no progress available."
     echo "Press CTRL+T if you want to see the current info of dd command."
-    sudo dd bs=$bs_size "if=${image}" "of=${rawdisk}"
+    sudo "${DD}" bs=$bs_size "if=${image}" "of=${rawdisk}"
   fi
 
   wait_for_disk "${disk}"
@@ -795,3 +813,5 @@ else
   play_warn
   echo "Something went wrong."
 fi
+
+# vim: set ts=2 sw=2 tw=0 et :
